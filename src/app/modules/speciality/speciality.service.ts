@@ -23,7 +23,11 @@ const getSpecialities = async (): Promise<{
   meta: MetaData;
 }> => {
   try {
-    const specialities = await prisma.speciality.findMany();
+    const specialities = await prisma.speciality.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
 
     const total = await prisma.speciality.count();
 
