@@ -1,4 +1,5 @@
-import express, { Application, Request, Response } from "express";
+import type { Application, Request, Response } from "express";
+import express from "express";
 
 const app: Application = express();
 
@@ -10,9 +11,17 @@ app.use(express.json());
 
 // Basic route
 app.get("/", (req: Request, res: Response) => {
-  res.status(200).json({
+  return res.status(200).json({
     success: true,
     message: "PH Health Care Server is Running",
+  });
+});
+
+app.use((req: Request, res: Response) => {
+  return res.status(404).json({
+    success: false,
+    message: "Route not found",
+    route: req.originalUrl,
   });
 });
 
