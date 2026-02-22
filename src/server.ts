@@ -9,7 +9,7 @@ const bootstrap = async () => {
       console.log(`Server is running on http://localhost:${port}`);
     });
   } catch (error) {
-    console.log(error);
+    console.error(error);
 
     process.exit(1);
   }

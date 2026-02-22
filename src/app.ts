@@ -1,5 +1,6 @@
-import type { Application, Request, Response } from "express";
-import express from "express";
+import express, { Application, Request, Response } from "express";
+import errorHandler from "./app/middleware/error-handler";
+import { IndexRoute } from "./app/routes";
 
 const app: Application = express();
 
@@ -17,6 +18,10 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
+// API routes
+app.use("/api/v1", IndexRoute);
+
+// Route not found handler
 app.use((req: Request, res: Response) => {
   return res.status(404).json({
     success: false,
@@ -24,5 +29,8 @@ app.use((req: Request, res: Response) => {
     route: req.originalUrl,
   });
 });
+
+// Global error handler
+app.use(errorHandler);
 
 export default app;
