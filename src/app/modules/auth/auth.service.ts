@@ -2,6 +2,7 @@ import { AppError } from "../../utils/AppError";
 import { auth } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
 import { UserStatus } from "@prisma/client";
+import status from "http-status";
 
 interface RegisterPatientPayload {
   name: string;
@@ -18,6 +19,12 @@ const registerPatient = async (payload: RegisterPatientPayload) => {
   try {
     const { name, email, password } = payload;
 
+    const isUserExist = await prisma.user.findUnique({ where: { email } });
+
+    if (isUserExist) {
+      throw new AppError("User already exists", status.CONFLICT);
+    }
+
     const data = await auth.api.signUpEmail({
       body: {
         name,
@@ -26,18 +33,35 @@ const registerPatient = async (payload: RegisterPatientPayload) => {
       },
     });
 
-    if (!data.user) {
-      throw new AppError("Failed to register patient", 400);
+    const patient = await prisma.$transaction(async (trx) => {
+      const createPatient = await trx.patient.create({
+        data: {
+          userId: data.user.id,
+          name: data.user.name,
+          email: data.user.email,
+        },
+      });
+
+      return createPatient;
+    });
+
+    if (!patient) {
+      await prisma.user.delete({ where: { id: data.user.id } });
     }
 
-    // TODO: Create patient profile
-    // const patient = await prisma.$transaction(async (trx) => {});
+    return {
+      ...data,
+      patient,
+    };
+  } catch (error: any) {
+    if (error instanceof AppError) {
+      throw error;
+    }
 
-    return data;
-  } catch (error) {
-    console.error(error);
-
-    throw new AppError("Failed to register patient", 500);
+    throw new AppError(
+      error.message || "Failed to register patient",
+      status.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -47,16 +71,12 @@ const loginUser = async (payload: LoginUserPayload) => {
 
     const user = await prisma.user.findUnique({ where: { email } });
 
-    if (!user) {
-      throw new AppError("User not found", 404);
+    if (user?.status === UserStatus.BLOCKED) {
+      throw new AppError("User is blocked", status.BAD_REQUEST);
     }
 
-    if (user.status === UserStatus.BLOCKED) {
-      throw new AppError("User is blocked", 400);
-    }
-
-    if (user.status === UserStatus.DELETED || user.isDeleted) {
-      throw new AppError("User is deleted", 400);
+    if (user?.status === UserStatus.DELETED || user?.isDeleted) {
+      throw new AppError("User is deleted", status.BAD_REQUEST);
     }
 
     const data = await auth.api.signInEmail({
@@ -66,15 +86,16 @@ const loginUser = async (payload: LoginUserPayload) => {
       },
     });
 
-    if (!data.user) {
-      throw new AppError("Failed to login user", 400);
+    return data;
+  } catch (error: any) {
+    if (error instanceof AppError) {
+      throw error;
     }
 
-    return data;
-  } catch (error) {
-    console.error(error);
-
-    throw new AppError("Failed to login user", 500);
+    throw new AppError(
+      error.message || "Failed to login user",
+      status.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 

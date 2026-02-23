@@ -16,5 +16,6 @@ model Patient {
 
     @@unique([email])
     @@unique([userId])
+    @@index([isDeleted], name: "idx_patient_isDeleted")
     @@map("patients")
 }

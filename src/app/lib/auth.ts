@@ -7,14 +7,24 @@ import { env } from "../../config/env";
 export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL,
   trustedOrigins: [`${env.APP_URL}`],
+  session: {
+    cookieCache: {
+      enabled: true,
+    },
+  },
   advanced: {
     disableCSRFCheck: true,
+  },
+  cookies: {
+    secure: false,
+    sameSite: "lax",
   },
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
   emailAndPassword: {
     enabled: true,
+    autoSignIn: false,
   },
   user: {
     additionalFields: {
