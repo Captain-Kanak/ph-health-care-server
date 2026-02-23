@@ -8,4 +8,4 @@ router.use("/auth", AuthRoutes);
 
 router.use("/specialities", SpecialityRoutes);
 
-export { router as IndexRoute };
+export { router as IndexRoutes };

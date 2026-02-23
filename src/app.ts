@@ -1,6 +1,6 @@
 import express, { Application, Request, Response } from "express";
 import errorHandler from "./app/middleware/error-handler";
-import { IndexRoute } from "./app/routes";
+import { IndexRoutes } from "./app/routes";
 
 const app: Application = express();
 
@@ -19,7 +19,7 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 // API routes
-app.use("/api/v1", IndexRoute);
+app.use("/api/v1", IndexRoutes);
 
 // Route not found handler
 app.use((req: Request, res: Response) => {
