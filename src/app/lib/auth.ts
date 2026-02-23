@@ -2,8 +2,22 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./prisma";
 import { UserRole, UserStatus } from "@prisma/client";
+import { env } from "../../config/env";
+
+if (!env.BETTER_AUTH_URL) {
+  throw new Error("BETTER_AUTH_URL is not defined");
+}
+
+if (!env.APP_URL) {
+  throw new Error("APP_URL is not defined");
+}
 
 export const auth = betterAuth({
+  baseURL: env.BETTER_AUTH_URL,
+  trustedOrigins: [`${env.APP_URL}`],
+  advanced: {
+    disableCSRFCheck: true,
+  },
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),

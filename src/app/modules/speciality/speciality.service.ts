@@ -8,13 +8,13 @@ interface MetaData {
 
 const createSpeciality = async (payload: Speciality): Promise<Speciality> => {
   try {
-    const speciality = await prisma.speciality.create({ data: payload });
+    const createdSpeciality = await prisma.speciality.create({ data: payload });
 
-    return speciality;
+    return createdSpeciality;
   } catch (error) {
     console.error(error);
 
-    throw new AppError("Error creating speciality", 500);
+    throw new AppError("Failed to create speciality", 500);
   }
 };
 
@@ -29,18 +29,18 @@ const getSpecialities = async (): Promise<{
       },
     });
 
-    const total = await prisma.speciality.count();
+    const totalSpecialities = await prisma.speciality.count();
 
     return {
       specialities,
       meta: {
-        total,
+        total: totalSpecialities,
       },
     };
   } catch (error) {
     console.error(error);
 
-    throw new AppError("Error getting specialities", 500);
+    throw new AppError("Failed to fetch specialities", 500);
   }
 };
 
@@ -68,7 +68,7 @@ const updateSpeciality = async (
       throw error;
     }
 
-    throw new AppError("Error updating speciality", 500);
+    throw new AppError("Failed to update speciality", 500);
   }
 };
 
@@ -90,7 +90,7 @@ const deleteSpeciality = async (id: string): Promise<Speciality> => {
       throw error;
     }
 
-    throw new AppError("Error deleting speciality", 500);
+    throw new AppError("Failed to delete speciality", 500);
   }
 };
 

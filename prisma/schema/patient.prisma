@@ -1,0 +1,6 @@
+model Patient {
+    id     String @id @default(uuid(7))
+    userId String
+    name   String
+    email  String
+}
