@@ -1,0 +1,31 @@
+model Doctor {
+    id                  String  @id @default(uuid())
+    userId              String
+    name                String  @db.VarChar(50)
+    email               String  @db.VarChar(100)
+    image               String? @db.Text
+    phone               String? @db.VarChar(20)
+    address             String? @db.Text
+    registrationNumber  String  @db.VarChar(50)
+    experience          Int     @default(0)
+    gender              Gender
+    appointmentFee      Float
+    qualification       String  @db.Text
+    currentWorkingPlace String  @db.Text
+    designation         String  @db.Text
+    isDeleted           Boolean @default(false)
+
+    deletedAt DateTime?
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+    doctorSpecialities DoctorSpeciality[]
+
+    @@unique([registrationNumber])
+    @@unique([email])
+    @@unique([userId])
+    @@index([isDeleted], name: "idx_doctor_isDeleted")
+    @@map("doctor")
+}

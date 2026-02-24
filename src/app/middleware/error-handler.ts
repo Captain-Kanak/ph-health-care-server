@@ -3,7 +3,7 @@ import { AppError } from "../utils/AppError";
 import { env } from "../../config/env";
 import status from "http-status";
 
-function errorHandler(
+function globalErrorHandler(
   err: Error,
   req: Request,
   res: Response,
@@ -30,4 +30,4 @@ function errorHandler(
   });
 }
 
-export default errorHandler;
+export default globalErrorHandler;
