@@ -1,9 +1,9 @@
-import "dotenv/config";
 import app from "./app";
+import { env } from "./config/env";
 
-const port = process.env.PORT || 5000;
+const port = env.PORT;
 
-const bootstrap = async () => {
+const startServer = async () => {
   try {
     app.listen(port, () => {
       console.log(`Server is running on http://localhost:${port}`);
@@ -15,4 +15,4 @@ const bootstrap = async () => {
   }
 };
 
-bootstrap();
+startServer();

@@ -11,4 +11,4 @@ router.patch("/:id", SpecialityController.updateSpeciality);
 
 router.delete("/:id", SpecialityController.deleteSpeciality);
 
-export { router as SpecialityRoute };
+export { router as SpecialityRoutes };

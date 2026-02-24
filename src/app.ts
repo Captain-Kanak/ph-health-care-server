@@ -1,6 +1,8 @@
 import express, { Application, Request, Response } from "express";
-import errorHandler from "./app/middleware/error-handler";
-import { IndexRoute } from "./app/routes";
+import { IndexRoutes } from "./app/routes";
+import globalErrorHandler from "./app/middleware/error-handler";
+import notFoundHandler from "./app/middleware/notFound-handler";
+import status from "http-status";
 
 const app: Application = express();
 
@@ -12,25 +14,19 @@ app.use(express.json());
 
 // Basic route
 app.get("/", (req: Request, res: Response) => {
-  return res.status(200).json({
+  return res.status(status.OK).json({
     success: true,
     message: "PH Health Care Server is Running",
   });
 });
 
 // API routes
-app.use("/api/v1", IndexRoute);
+app.use("/api/v1", IndexRoutes);
 
 // Route not found handler
-app.use((req: Request, res: Response) => {
-  return res.status(404).json({
-    success: false,
-    message: "Route not found",
-    route: req.originalUrl,
-  });
-});
+app.use(notFoundHandler);
 
 // Global error handler
-app.use(errorHandler);
+app.use(globalErrorHandler);
 
 export default app;
