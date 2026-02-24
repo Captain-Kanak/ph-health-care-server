@@ -5,9 +5,10 @@ model Speciality {
     icon        String? @db.VarChar(255)
     isDeleted   Boolean @default(false)
 
-    deletedAt DateTime?
-    createdAt DateTime  @default(now())
-    updatedAt DateTime  @updatedAt
+    deletedAt          DateTime?
+    createdAt          DateTime           @default(now())
+    updatedAt          DateTime           @updatedAt
+    doctorSpecialities DoctorSpeciality[]
 
     @@unique([title])
     @@index([isDeleted], name: "idx_speciality_isDeleted")
@@ -22,7 +23,8 @@ model DoctorSpeciality {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    doctor Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    doctor     Doctor     @relation(fields: [doctorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    speciality Speciality @relation(fields: [specialityId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
     @@unique([doctorId, specialityId])
     @@index([doctorId], name: "idx_doctor_speciality_doctor_id")

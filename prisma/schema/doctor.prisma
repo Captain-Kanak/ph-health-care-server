@@ -13,6 +13,7 @@ model Doctor {
     qualification       String  @db.Text
     currentWorkingPlace String  @db.Text
     designation         String  @db.Text
+    averageRating       Float   @default(0.0)
     isDeleted           Boolean @default(false)
 
     deletedAt DateTime?
@@ -21,7 +22,7 @@ model Doctor {
 
     user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
-    doctorSpecialities DoctorSpeciality[]
+    specialities DoctorSpeciality[]
 
     @@unique([registrationNumber])
     @@unique([email])
