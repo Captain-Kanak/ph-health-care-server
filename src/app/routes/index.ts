@@ -1,8 +1,14 @@
 import { Router } from "express";
-import { SpecialityRoute } from "../modules/speciality/speciality.route";
+import { SpecialityRoutes } from "../modules/speciality/speciality.route";
+import { AuthRoutes } from "../modules/auth/auth.route";
+import { UserRoutes } from "../modules/user/user.route";
 
 const router: Router = Router();
 
-router.use("/specialities", SpecialityRoute);
+router.use("/auth", AuthRoutes);
 
-export { router as IndexRoute };
+router.use("/users", UserRoutes);
+
+router.use("/specialities", SpecialityRoutes);
+
+export { router as IndexRoutes };

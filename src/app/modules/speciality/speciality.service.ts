@@ -1,6 +1,7 @@
 import { Speciality } from "@prisma/client";
 import { AppError } from "../../utils/AppError";
 import { prisma } from "../../lib/prisma";
+import status from "http-status";
 
 interface MetaData {
   total: number;
@@ -8,13 +9,14 @@ interface MetaData {
 
 const createSpeciality = async (payload: Speciality): Promise<Speciality> => {
   try {
-    const speciality = await prisma.speciality.create({ data: payload });
+    const createdSpeciality = await prisma.speciality.create({ data: payload });
 
-    return speciality;
-  } catch (error) {
-    console.error(error);
-
-    throw new AppError("Error creating speciality", 500);
+    return createdSpeciality;
+  } catch (error: any) {
+    throw new AppError(
+      error.message || "Failed to create speciality",
+      status.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -23,20 +25,25 @@ const getSpecialities = async (): Promise<{
   meta: MetaData;
 }> => {
   try {
-    const specialities = await prisma.speciality.findMany();
+    const specialities = await prisma.speciality.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
 
-    const total = await prisma.speciality.count();
+    const totalSpecialities = await prisma.speciality.count();
 
     return {
       specialities,
       meta: {
-        total,
+        total: totalSpecialities,
       },
     };
-  } catch (error) {
-    console.error(error);
-
-    throw new AppError("Error getting specialities", 500);
+  } catch (error: any) {
+    throw new AppError(
+      error.message || "Failed to fetch specialities",
+      status.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -48,7 +55,7 @@ const updateSpeciality = async (
     const speciality = await prisma.speciality.findUnique({ where: { id } });
 
     if (!speciality) {
-      throw new AppError("Speciality not found", 404);
+      throw new AppError("Speciality not found", status.NOT_FOUND);
     }
 
     const updatedSpeciality = await prisma.speciality.update({
@@ -57,14 +64,15 @@ const updateSpeciality = async (
     });
 
     return updatedSpeciality;
-  } catch (error) {
-    console.error(error);
-
+  } catch (error: any) {
     if (error instanceof AppError) {
       throw error;
     }
 
-    throw new AppError("Error updating speciality", 500);
+    throw new AppError(
+      error.message || "Failed to update speciality",
+      status.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 
@@ -73,20 +81,21 @@ const deleteSpeciality = async (id: string): Promise<Speciality> => {
     const speciality = await prisma.speciality.findUnique({ where: { id } });
 
     if (!speciality) {
-      throw new AppError("Speciality not found", 404);
+      throw new AppError("Speciality not found", status.NOT_FOUND);
     }
 
     const deletedSpeciality = await prisma.speciality.delete({ where: { id } });
 
     return deletedSpeciality;
-  } catch (error) {
-    console.error(error);
-
+  } catch (error: any) {
     if (error instanceof AppError) {
       throw error;
     }
 
-    throw new AppError("Error deleting speciality", 500);
+    throw new AppError(
+      error.message || "Failed to delete speciality",
+      status.INTERNAL_SERVER_ERROR,
+    );
   }
 };
 

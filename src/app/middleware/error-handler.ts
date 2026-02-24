@@ -1,14 +1,20 @@
 import type { NextFunction, Request, Response } from "express";
 import { AppError } from "../utils/AppError";
+import { env } from "../../config/env";
+import status from "http-status";
 
-function errorHandler(
+function globalErrorHandler(
   err: Error,
   req: Request,
   res: Response,
   next: NextFunction,
 ) {
-  let statusCode = 500;
-  let message = "Internal Server Error";
+  if (env.NODE_ENV === "development") {
+    console.error(err);
+  }
+
+  let statusCode: number = status.INTERNAL_SERVER_ERROR;
+  let message: string = err.message || "Internal Server Error";
 
   if (err instanceof AppError) {
     statusCode = err.statusCode;
@@ -18,10 +24,10 @@ function errorHandler(
   return res.status(statusCode).json({
     success: false,
     message,
-    ...(process.env.NODE_ENV === "development" && {
+    ...(env.NODE_ENV === "development" && {
       stack: err.stack,
     }),
   });
 }
 
-export default errorHandler;
+export default globalErrorHandler;
