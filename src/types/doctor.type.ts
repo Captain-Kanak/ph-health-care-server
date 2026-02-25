@@ -21,7 +21,6 @@ export interface CreateDoctorPayload {
 
 export interface UpdateDoctorPayload {
   name?: string;
-  email?: string;
   image?: string;
   phone?: string;
   address?: string;
