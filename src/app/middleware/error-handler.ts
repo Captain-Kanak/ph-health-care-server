@@ -3,14 +3,11 @@ import { AppError } from "../utils/AppError";
 import { env } from "../../config/env";
 import status from "http-status";
 import * as z from "zod";
-
-interface ErrorSourceType {
-  path: string;
-  message: string;
-}
+import { ErrorSourceType } from "../../interfaces/error.interface";
+import { handleZodError } from "../utils/ZodError";
 
 function globalErrorHandler(
-  err: Error,
+  err: any,
   req: Request,
   res: Response,
   next: NextFunction,
@@ -19,9 +16,9 @@ function globalErrorHandler(
     console.error(err);
   }
 
-  const errorSource: ErrorSourceType[] = [];
   let statusCode: number = status.INTERNAL_SERVER_ERROR;
-  let message: string = err.message || "Internal Server Error";
+  let message: string = "Internal Server Error";
+  let errorSources: ErrorSourceType[] = [];
 
   if (err instanceof AppError) {
     statusCode = err.statusCode;
@@ -29,21 +26,17 @@ function globalErrorHandler(
   }
 
   if (err instanceof z.ZodError) {
-    statusCode = status.BAD_REQUEST;
-    message = "Zod Validation Error";
+    const simplifiedZodErrors = handleZodError(err);
 
-    err.issues.forEach((issue) => {
-      errorSource.push({
-        path: issue.path.join("."),
-        message: issue.message,
-      });
-    });
+    statusCode = simplifiedZodErrors.statusCode;
+    message = simplifiedZodErrors.message;
+    errorSources = [...simplifiedZodErrors.errorSources];
   }
 
   return res.status(statusCode).json({
     success: false,
     message,
-    errorSource,
+    errorSources,
     ...(env.NODE_ENV === "development" && { stack: err.stack }),
   });
 }
