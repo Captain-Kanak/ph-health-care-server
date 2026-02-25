@@ -3,17 +3,10 @@ import { auth } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
 import { UserStatus } from "@prisma/client";
 import status from "http-status";
-
-interface RegisterPatientPayload {
-  name: string;
-  email: string;
-  password: string;
-}
-
-interface LoginUserPayload {
-  email: string;
-  password: string;
-}
+import {
+  LoginUserPayload,
+  RegisterPatientPayload,
+} from "../../../types/auth.type";
 
 const registerPatient = async (payload: RegisterPatientPayload) => {
   try {

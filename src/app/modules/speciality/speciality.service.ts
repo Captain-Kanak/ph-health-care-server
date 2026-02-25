@@ -2,10 +2,7 @@ import { Speciality } from "@prisma/client";
 import { AppError } from "../../utils/AppError";
 import { prisma } from "../../lib/prisma";
 import status from "http-status";
-
-interface MetaData {
-  total: number;
-}
+import { MetaData } from "../../../types/metadata.type";
 
 const createSpeciality = async (payload: Speciality): Promise<Speciality> => {
   try {

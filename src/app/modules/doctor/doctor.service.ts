@@ -1,22 +1,7 @@
 import status from "http-status";
 import { AppError } from "../../utils/AppError";
 import { prisma } from "../../lib/prisma";
-
-interface UpdateDoctorPayload {
-  name?: string;
-  email?: string;
-  image?: string;
-  phone?: string;
-  address?: string;
-  registrationNumber?: string;
-  experience?: number;
-  gender?: string;
-  appointmentFee?: number;
-  qualification?: string;
-  currentWorkingPlace?: string;
-  designation?: string;
-  specialities?: string[];
-}
+import { UpdateDoctorPayload } from "../../../types/doctor.type";
 
 const getAllDoctors = async () => {
   try {

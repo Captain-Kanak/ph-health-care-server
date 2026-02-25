@@ -1,27 +1,9 @@
-import { Gender, Speciality, UserRole } from "@prisma/client";
+import { Speciality, UserRole } from "@prisma/client";
 import { AppError } from "../../utils/AppError";
 import status from "http-status";
 import { prisma } from "../../lib/prisma";
 import { auth } from "../../lib/auth";
-
-interface CreateDoctorPayload {
-  password: string;
-  doctor: {
-    name: string;
-    email: string;
-    image?: string;
-    phone?: string;
-    address?: string;
-    registrationNumber: string;
-    experience: number;
-    gender: Gender;
-    appointmentFee: number;
-    qualification: string;
-    currentWorkingPlace: string;
-    designation: string;
-  };
-  specialities: string[];
-}
+import { CreateDoctorPayload } from "../../../types/doctor.type";
 
 const createDoctor = async (payload: CreateDoctorPayload) => {
   try {
