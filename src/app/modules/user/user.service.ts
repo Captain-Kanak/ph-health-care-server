@@ -1,5 +1,5 @@
 import { Speciality, UserRole } from "@prisma/client";
-import { AppError } from "../../utils/AppError";
+import AppError from "../../utils/AppError";
 import status from "http-status";
 import { prisma } from "../../lib/prisma";
 import { auth } from "../../lib/auth";
