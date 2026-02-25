@@ -14,3 +14,17 @@ export const validateRequestBody = (zodObject: z.ZodObject) => {
     next();
   };
 };
+
+export const validateParams = (zodObject: z.ZodObject) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    const parsedResult = zodObject.safeParse(req.params);
+
+    if (!parsedResult.success) {
+      next(parsedResult.error);
+    }
+
+    req.params = parsedResult.data as Record<string, string>;
+
+    next();
+  };
+};
