@@ -7,6 +7,7 @@ import {
   LoginUserPayload,
   RegisterPatientPayload,
 } from "../../../types/auth.type";
+import { tokenUtils } from "../../utils/token";
 
 const registerPatient = async (payload: RegisterPatientPayload) => {
   try {
@@ -42,8 +43,30 @@ const registerPatient = async (payload: RegisterPatientPayload) => {
       await prisma.user.delete({ where: { id: data.user.id } });
     }
 
+    const accessToken = tokenUtils.getAccessToken({
+      id: data.user.id,
+      name: data.user.name,
+      email: data.user.email,
+      emailVerified: data.user.emailVerified,
+      role: data.user.role,
+      status: data.user.status,
+      isDeleted: data.user.isDeleted,
+    });
+
+    const refreshToken = tokenUtils.getRefreshToken({
+      id: data.user.id,
+      name: data.user.name,
+      email: data.user.email,
+      emailVerified: data.user.emailVerified,
+      role: data.user.role,
+      status: data.user.status,
+      isDeleted: data.user.isDeleted,
+    });
+
     return {
       ...data,
+      accessToken: accessToken.data,
+      refreshToken: refreshToken.data,
       patient,
     };
   } catch (error: any) {
@@ -65,11 +88,11 @@ const loginUser = async (payload: LoginUserPayload) => {
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (user?.status === UserStatus.BLOCKED) {
-      throw new AppError("User is blocked", status.BAD_REQUEST);
+      throw new AppError("User is blocked", status.FORBIDDEN);
     }
 
     if (user?.status === UserStatus.DELETED || user?.isDeleted) {
-      throw new AppError("User is deleted", status.BAD_REQUEST);
+      throw new AppError("User is deleted", status.NOT_FOUND);
     }
 
     const data = await auth.api.signInEmail({
@@ -79,7 +102,31 @@ const loginUser = async (payload: LoginUserPayload) => {
       },
     });
 
-    return data;
+    const accessToken = tokenUtils.getAccessToken({
+      id: data.user.id,
+      name: data.user.name,
+      email: data.user.email,
+      emailVerified: data.user.emailVerified,
+      role: data.user.role,
+      status: data.user.status,
+      isDeleted: data.user.isDeleted,
+    });
+
+    const refreshToken = tokenUtils.getRefreshToken({
+      id: data.user.id,
+      name: data.user.name,
+      email: data.user.email,
+      emailVerified: data.user.emailVerified,
+      role: data.user.role,
+      status: data.user.status,
+      isDeleted: data.user.isDeleted,
+    });
+
+    return {
+      ...data,
+      accessToken: accessToken.data,
+      refreshToken: refreshToken.data,
+    };
   } catch (error: any) {
     if (error instanceof AppError) {
       throw error;
