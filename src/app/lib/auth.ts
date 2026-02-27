@@ -8,11 +8,11 @@ export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL,
   trustedOrigins: [`${env.APP_URL}`],
   session: {
-    expiresIn: Number(env.ACCESS_TOKEN_EXPIRES_IN) * 24 * 60 * 60,
-    updateAge: Number(env.BETTER_AUTH_SESSION_TOKEN_UPDATE_AGE) * 24 * 60 * 60,
+    expiresIn: 1 * 24 * 60 * 60,
+    updateAge: 7 * 24 * 60 * 60,
     cookieCache: {
       enabled: true,
-      maxAge: Number(env.ACCESS_TOKEN_EXPIRES_IN) * 24 * 60 * 60,
+      maxAge: 1 * 24 * 60 * 60,
     },
   },
   advanced: {
@@ -27,7 +27,7 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
-    autoSignIn: false,
+    autoSignIn: true,
   },
   user: {
     additionalFields: {

@@ -4,17 +4,17 @@ import { env } from "../../config/env";
 import { Response } from "express";
 import { cookieUtils } from "./cookie";
 
-const getAccessToken = (payload: JwtPayload) => {
+const createAccessToken = (payload: JwtPayload) => {
   const accessToken = jwtUtils.createToken(payload, env.ACCESS_TOKEN_SECRET, {
-    expiresIn: `${Number(env.ACCESS_TOKEN_EXPIRES_IN)}Day`,
+    expiresIn: 60 * 60 * 24 * 1,
   } as SignOptions);
 
   return accessToken;
 };
 
-const getRefreshToken = (payload: JwtPayload) => {
+const createRefreshToken = (payload: JwtPayload) => {
   const refreshToken = jwtUtils.createToken(payload, env.REFRESH_TOKEN_SECRET, {
-    expiresIn: `${Number(env.REFRESH_TOKEN_EXPIRES_IN)}Days`,
+    expiresIn: 60 * 60 * 24 * 7,
   } as SignOptions);
 
   return refreshToken;
@@ -26,7 +26,7 @@ const setAccessTokenCookie = (res: Response, token: string) => {
     secure: true,
     sameSite: "none",
     path: "/",
-    maxAge: Number(env.ACCESS_TOKEN_EXPIRES_IN) * 24 * 60 * 60,
+    maxAge: 1 * 24 * 60 * 60 * 1000,
   });
 };
 
@@ -36,7 +36,7 @@ const setRefreshTokenCookie = (res: Response, token: string) => {
     secure: true,
     sameSite: "none",
     path: "/",
-    maxAge: Number(env.REFRESH_TOKEN_EXPIRES_IN) * 24 * 60 * 60,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 };
 
@@ -46,13 +46,13 @@ const setBetterAuthSessionCookie = (res: Response, token: string) => {
     secure: true,
     sameSite: "none",
     path: "/",
-    maxAge: Number(env.ACCESS_TOKEN_EXPIRES_IN) * 24 * 60 * 60,
+    maxAge: 1 * 24 * 60 * 60 * 1000,
   });
 };
 
 export const tokenUtils = {
-  getAccessToken,
-  getRefreshToken,
+  createAccessToken,
+  createRefreshToken,
   setAccessTokenCookie,
   setRefreshTokenCookie,
   setBetterAuthSessionCookie,

@@ -6,10 +6,11 @@ import {
 } from "../../middleware/zod-middleware";
 import { paramsIdZodSchema } from "../../validation/params.zod";
 import { UpdateDoctorZodSchema } from "../../validation/doctor.zod";
+import authMiddleware from "../../middleware/auth-middleware";
 
 const router: Router = Router();
 
-router.get("/", DoctorController.getAllDoctors);
+router.get("/", authMiddleware(), DoctorController.getAllDoctors);
 
 router.get(
   "/:id",

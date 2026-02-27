@@ -43,7 +43,7 @@ const registerPatient = async (payload: RegisterPatientPayload) => {
       await prisma.user.delete({ where: { id: data.user.id } });
     }
 
-    const accessToken = tokenUtils.getAccessToken({
+    const accessToken = tokenUtils.createAccessToken({
       id: data.user.id,
       name: data.user.name,
       email: data.user.email,
@@ -53,7 +53,7 @@ const registerPatient = async (payload: RegisterPatientPayload) => {
       isDeleted: data.user.isDeleted,
     });
 
-    const refreshToken = tokenUtils.getRefreshToken({
+    const refreshToken = tokenUtils.createRefreshToken({
       id: data.user.id,
       name: data.user.name,
       email: data.user.email,
@@ -64,9 +64,9 @@ const registerPatient = async (payload: RegisterPatientPayload) => {
     });
 
     return {
+      accessToken,
+      refreshToken,
       ...data,
-      accessToken: accessToken.data,
-      refreshToken: refreshToken.data,
       patient,
     };
   } catch (error: any) {
@@ -102,7 +102,7 @@ const loginUser = async (payload: LoginUserPayload) => {
       },
     });
 
-    const accessToken = tokenUtils.getAccessToken({
+    const accessToken = tokenUtils.createAccessToken({
       id: data.user.id,
       name: data.user.name,
       email: data.user.email,
@@ -112,7 +112,7 @@ const loginUser = async (payload: LoginUserPayload) => {
       isDeleted: data.user.isDeleted,
     });
 
-    const refreshToken = tokenUtils.getRefreshToken({
+    const refreshToken = tokenUtils.createRefreshToken({
       id: data.user.id,
       name: data.user.name,
       email: data.user.email,
@@ -123,9 +123,9 @@ const loginUser = async (payload: LoginUserPayload) => {
     });
 
     return {
+      accessToken,
+      refreshToken,
       ...data,
-      accessToken: accessToken.data,
-      refreshToken: refreshToken.data,
     };
   } catch (error: any) {
     if (error instanceof AppError) {
