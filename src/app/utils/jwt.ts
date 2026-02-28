@@ -11,17 +11,9 @@ const createToken = (
 };
 
 const verifyToken = (token: string, secret: string) => {
-  try {
-    const decoded = jwt.verify(token, secret) as JwtPayload;
+  const decoded = jwt.verify(token, secret) as JwtPayload;
 
-    return decoded;
-  } catch (error: any) {
-    return {
-      success: false,
-      message: error.message || "Invalid token",
-      error,
-    };
-  }
+  return decoded;
 };
 
 const decodeToken = (token: string) => {

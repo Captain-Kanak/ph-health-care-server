@@ -11,40 +11,41 @@ const authMiddleware =
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const refreshToken = cookieUtils.getCookie(req, "refreshToken");
+      const sessionToken = cookieUtils.getCookie(
+        req,
+        "better-auth.session_token",
+      );
+      const accessToken = cookieUtils.getCookie(req, "accessToken");
 
       if (!refreshToken) {
         throw new AppError("Unauthorized", status.UNAUTHORIZED);
       }
 
-      console.log({ refreshToken });
-
-      const sessionToken = cookieUtils.getCookie(
-        req,
-        "better-auth.session_token",
-      );
-
       if (!sessionToken) {
         throw new AppError("Unauthorized", status.UNAUTHORIZED);
       }
-
-      console.log({ sessionToken });
-
-      const accessToken = cookieUtils.getCookie(req, "accessToken");
 
       if (!accessToken) {
         throw new AppError("Unauthorized", status.UNAUTHORIZED);
       }
 
-      const verifiedAccessToken = jwtUtils.verifyToken(
+      const isAccessTokenValid = jwtUtils.verifyToken(
         accessToken,
         env.ACCESS_TOKEN_SECRET,
       );
 
-      if (!verifiedAccessToken.success) {
+      const isRefreshTokenValid = jwtUtils.verifyToken(
+        refreshToken,
+        env.REFRESH_TOKEN_SECRET,
+      );
+
+      if (!isAccessTokenValid) {
         throw new AppError("Unauthorized", status.UNAUTHORIZED);
       }
 
-      console.log({ accessToken, verifiedAccessToken });
+      if (!isRefreshTokenValid) {
+        throw new AppError("Unauthorized", status.UNAUTHORIZED);
+      }
 
       next();
     } catch (error) {
