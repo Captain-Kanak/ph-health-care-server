@@ -75,6 +75,8 @@ const authMiddleware =
               status.FORBIDDEN,
             );
           }
+
+          req.user = user;
         }
       }
 

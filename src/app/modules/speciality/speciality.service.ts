@@ -44,6 +44,27 @@ const getSpecialities = async (): Promise<{
   }
 };
 
+const getSpecialityById = async (id: string): Promise<Speciality> => {
+  try {
+    const speciality = await prisma.speciality.findUnique({ where: { id } });
+
+    if (!speciality) {
+      throw new AppError("Speciality not found", status.NOT_FOUND);
+    }
+
+    return speciality;
+  } catch (error: any) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+
+    throw new AppError(
+      error.message || "Failed to update speciality",
+      status.INTERNAL_SERVER_ERROR,
+    );
+  }
+};
+
 const updateSpeciality = async (
   id: string,
   payload: Speciality,
@@ -99,6 +120,7 @@ const deleteSpeciality = async (id: string): Promise<Speciality> => {
 export const SpecialityService = {
   createSpeciality,
   getSpecialities,
+  getSpecialityById,
   updateSpeciality,
   deleteSpeciality,
 };

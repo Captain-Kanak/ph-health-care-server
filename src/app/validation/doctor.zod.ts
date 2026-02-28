@@ -1,7 +1,7 @@
 import * as z from "zod";
 import { Gender } from "@prisma/client";
 
-export const createDoctorZodSchema = z.object({
+const createDoctorZodSchema = z.object({
   password: z
     .string("Password is required")
     .min(8, "Password must be at least 8 characters long")
@@ -46,7 +46,7 @@ export const createDoctorZodSchema = z.object({
     .min(1, "At least one speciality is required"),
 });
 
-export const UpdateDoctorZodSchema = z
+const UpdateDoctorZodSchema = z
   .object({
     name: z.string().max(50, "Name can't be longer than 50 characters"),
     image: z.string(),
@@ -73,3 +73,5 @@ export const UpdateDoctorZodSchema = z
     specialities: z.array(z.uuid()),
   })
   .partial();
+
+export { createDoctorZodSchema, UpdateDoctorZodSchema };

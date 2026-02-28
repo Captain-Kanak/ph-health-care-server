@@ -1,18 +1,9 @@
 import { UserRole, UserStatus } from "@prisma/client";
-import jwt, { SignOptions } from "jsonwebtoken";
-
-interface DecodedUser {
-  id: string;
-  name: string;
-  email: string;
-  emailVerified: boolean;
-  role: UserRole;
-  status: UserStatus;
-  isDeleted: boolean;
-}
+import jwt, { JwtPayload, SignOptions } from "jsonwebtoken";
+import { DecodedUser } from "../../types/auth.type";
 
 const createToken = (
-  payload: DecodedUser,
+  payload: JwtPayload,
   secret: string,
   { expiresIn }: SignOptions,
 ) => {
