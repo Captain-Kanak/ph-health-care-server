@@ -23,6 +23,7 @@ model Doctor {
     user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
     specialities DoctorSpeciality[]
+    schedules    DoctorSchedule[]
 
     @@unique([registrationNumber])
     @@unique([email])

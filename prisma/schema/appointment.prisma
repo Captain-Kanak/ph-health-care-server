@@ -1,0 +1,11 @@
+model Appointment {
+    id         String @id @default(uuid(7))
+    patientId  String
+    doctorId   String
+    scheduleId String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@map("appointments")
+}

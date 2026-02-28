@@ -13,7 +13,7 @@ const createDoctorZodSchema = z.object({
     email: z
       .email("Invalid email address")
       .max(100, "Email can't be longer than 100 characters"),
-    image: z.string().optional(),
+    image: z.url("Invalid URL format").optional(),
     phone: z
       .string()
       .min(11, "Phone number must be at least 11 characters long")

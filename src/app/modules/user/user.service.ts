@@ -4,6 +4,9 @@ import status from "http-status";
 import { prisma } from "../../lib/prisma";
 import { auth } from "../../lib/auth";
 import { CreateDoctorPayload } from "../../../types/doctor.type";
+import { CreateAdmin } from "./user.interface";
+
+const createAdmin = async (payload: CreateAdmin) => {};
 
 const createDoctor = async (payload: CreateDoctorPayload) => {
   try {
@@ -125,5 +128,6 @@ const createDoctor = async (payload: CreateDoctorPayload) => {
 };
 
 export const UserService = {
+  createAdmin,
   createDoctor,
 };

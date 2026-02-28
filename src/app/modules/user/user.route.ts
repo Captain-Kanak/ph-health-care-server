@@ -4,8 +4,16 @@ import { createDoctorZodSchema } from "../../validation/doctor.zod";
 import { validateRequestBody } from "../../middleware/zod-middleware";
 import authMiddleware from "../../middleware/auth-middleware";
 import { UserRole } from "@prisma/client";
+import { UserValidation } from "./user.validation";
 
 const router: Router = Router();
+
+router.post(
+  "/create-admin",
+  authMiddleware(UserRole.SUPER_ADMIN),
+  validateRequestBody(UserValidation.createAdminValidationSchema),
+  UserController.createAdmin,
+);
 
 router.post(
   "/create-doctor",
