@@ -1,5 +1,5 @@
 import { Speciality } from "@prisma/client";
-import AppError from "../../utils/AppError";
+import AppError from "../../errors/AppError";
 import { prisma } from "../../lib/prisma";
 import status from "http-status";
 import { MetaData } from "../../../types/metadata.type";

@@ -1,4 +1,4 @@
-import AppError from "../../utils/AppError";
+import AppError from "../../errors/AppError";
 import { auth } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
 import { UserStatus } from "@prisma/client";

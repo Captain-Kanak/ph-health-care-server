@@ -1,10 +1,10 @@
 import type { NextFunction, Request, Response } from "express";
-import AppError from "../utils/AppError";
+import AppError from "../errors/AppError";
 import { env } from "../../config/env";
 import status from "http-status";
 import * as z from "zod";
 import { ErrorSourceType } from "../../interfaces/error.interface";
-import { handleZodError } from "../utils/ZodError";
+import { handleZodError } from "../errors/ZodError";
 
 function globalErrorHandler(
   err: Error,

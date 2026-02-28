@@ -21,7 +21,7 @@ export const auth = betterAuth({
     disableCSRFCheck: true,
   },
   cookies: {
-    secure: false,
+    secure: env.NODE_ENV === "production",
     sameSite: "lax",
   },
   database: prismaAdapter(prisma, {
