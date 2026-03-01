@@ -1,5 +1,5 @@
 model Doctor {
-    id                  String  @id @default(uuid())
+    id                  String  @id @default(uuid(7))
     userId              String
     name                String  @db.VarChar(50)
     email               String  @db.VarChar(100)
@@ -9,7 +9,7 @@ model Doctor {
     registrationNumber  String  @db.VarChar(50)
     experience          Int     @default(0)
     gender              Gender
-    appointmentFee      Float
+    appointmentFee      Float   @default(0.0)
     qualification       String  @db.Text
     currentWorkingPlace String  @db.Text
     designation         String  @db.Text
@@ -24,10 +24,11 @@ model Doctor {
 
     specialities DoctorSpeciality[]
     schedules    DoctorSchedule[]
+    appointments Appointment[]
 
-    @@unique([registrationNumber])
-    @@unique([email])
     @@unique([userId])
+    @@unique([email])
+    @@unique([registrationNumber])
     @@index([isDeleted], name: "idx_doctor_isDeleted")
-    @@map("doctor")
+    @@map("doctors")
 }

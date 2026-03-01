@@ -1,11 +1,25 @@
 model Appointment {
-    id         String @id @default(uuid(7))
-    patientId  String
-    doctorId   String
-    scheduleId String
+    id             String            @id @default(uuid(7))
+    patientId      String
+    doctorId       String
+    scheduleId     String
+    videoCallingId String
+    status         AppointmentStatus @default(SCHEDULED)
+    paymentStatus  PaymentStatus     @default(UNPAID)
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
+    patient  Patient        @relation(fields: [patientId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    doctor   Doctor         @relation(fields: [doctorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    schedule DoctorSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+    payment      Payment?
+    prescription Prescription?
+    review       Review?
+
+    @@unique([patientId, doctorId, scheduleId])
+    @@index([patientId], name: "idx_appointment_patientId")
+    @@index([doctorId], name: "idx_appointment_doctorId")
     @@map("appointments")
 }

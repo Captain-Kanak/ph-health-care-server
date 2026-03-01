@@ -1,10 +1,13 @@
 model Prescription {
-    id            String   @id @default(uuid(7))
+    id            String @id @default(uuid(7))
     appointmentId String
-    patientId     String
-    doctorId      String
-    createdAt     DateTime @default(now())
-    updatedAt     DateTime @updatedAt
+    instractions  String @db.Text
+
+    followupDate DateTime?
+    createdAt    DateTime  @default(now())
+    updatedAt    DateTime  @updatedAt
+
+    appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
 
     @@unique([appointmentId])
     @@map("prescriptions")

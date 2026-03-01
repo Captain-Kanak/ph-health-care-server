@@ -1,11 +1,11 @@
 model Admin {
     id        String  @id @default(uuid(7))
     userId    String
-    name      String
-    email     String
-    image     String?
-    phone     String?
-    address   String?
+    name      String  @db.VarChar(50)
+    email     String  @db.VarChar(100)
+    image     String? @db.Text
+    phone     String? @db.VarChar(20)
+    address   String? @db.Text
     gender    Gender
     isDeleted Boolean @default(false)
 
@@ -15,8 +15,8 @@ model Admin {
 
     user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
-    @@unique([email])
     @@unique([userId])
+    @@unique([email])
     @@index([isDeleted], name: "idx_admin_isDeleted")
-    @@map("admin")
+    @@map("admins")
 }

@@ -1,0 +1,29 @@
+model PatientHealthData {
+    id                  String     @id @default(uuid(7))
+    patientId           String
+    dateOfBirth         DateTime
+    bloodGroup          BloodGroup
+    height              String     @db.VarChar(10)
+    weight              String     @db.VarChar(10)
+    dietaryPreference   String     @db.Text
+    mentalHealthHistory String     @db.Text
+    immunizationStatus  String     @db.Text
+    isSmoker            Boolean
+    isPregnant          Boolean
+    hasAllergies        Boolean
+    hasDiabetes         Boolean
+    hasPastSurgeries    Boolean
+    recentAnxiety       Boolean
+    recentDepression    Boolean
+    isMarried           Boolean
+    isDeleted           Boolean    @default(false)
+
+    deletedAt DateTime?
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+
+    patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+    @@unique([patientId])
+    @@map("patients_health_data")
+}
