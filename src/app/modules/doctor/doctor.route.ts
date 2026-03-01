@@ -4,7 +4,7 @@ import {
   validateParams,
   validateRequestBody,
 } from "../../middleware/zod-middleware";
-import { paramsIdZodSchema } from "../../validation/params.zod";
+import { ParamsIdZodSchema } from "../../validation/params.validation";
 import { UpdateDoctorZodSchema } from "../../validation/doctor.zod";
 import authMiddleware from "../../middleware/auth-middleware";
 import { UserRole } from "@prisma/client";
@@ -15,14 +15,14 @@ router.get("/", DoctorController.getAllDoctors);
 
 router.get(
   "/:id",
-  validateParams(paramsIdZodSchema),
+  validateParams(ParamsIdZodSchema),
   DoctorController.getDoctorById,
 );
 
 router.patch(
   "/:id",
   authMiddleware(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.DOCTOR),
-  validateParams(paramsIdZodSchema),
+  validateParams(ParamsIdZodSchema),
   validateRequestBody(UpdateDoctorZodSchema),
   DoctorController.updateDoctorById,
 );
@@ -30,7 +30,7 @@ router.patch(
 router.delete(
   "/:id",
   authMiddleware(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.DOCTOR),
-  validateParams(paramsIdZodSchema),
+  validateParams(ParamsIdZodSchema),
   DoctorController.deleteDoctorById,
 );
 

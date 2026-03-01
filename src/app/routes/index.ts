@@ -8,10 +8,10 @@ const router: Router = Router();
 
 router.use("/auth", AuthRoutes);
 
+router.use("/specialities", SpecialityRoutes);
+
 router.use("/users", UserRoutes);
 
 router.use("/doctors", DoctorRoutes);
-
-router.use("/specialities", SpecialityRoutes);
 
 export { router as IndexRoutes };

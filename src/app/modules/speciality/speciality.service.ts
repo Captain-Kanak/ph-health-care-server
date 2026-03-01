@@ -3,8 +3,11 @@ import AppError from "../../errors/AppError";
 import { prisma } from "../../lib/prisma";
 import status from "http-status";
 import { MetaData } from "../../../types/metadata.type";
+import { CreateSpeciality, UpdateSpeciality } from "./speciality.interface";
 
-const createSpeciality = async (payload: Speciality): Promise<Speciality> => {
+const createSpeciality = async (
+  payload: CreateSpeciality,
+): Promise<Speciality> => {
   try {
     const createdSpeciality = await prisma.speciality.create({ data: payload });
 
@@ -67,7 +70,7 @@ const getSpecialityById = async (id: string): Promise<Speciality> => {
 
 const updateSpeciality = async (
   id: string,
-  payload: Speciality,
+  payload: UpdateSpeciality,
 ): Promise<Speciality> => {
   try {
     const speciality = await prisma.speciality.findUnique({ where: { id } });

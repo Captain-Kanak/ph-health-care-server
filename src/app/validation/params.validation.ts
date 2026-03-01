@@ -1,7 +1,7 @@
 import * as z from "zod";
 
-const paramsIdZodSchema = z.object({
+const ParamsIdZodSchema = z.object({
   id: z.uuid("UUID is invalid or missing"),
 });
 
-export { paramsIdZodSchema };
+export { ParamsIdZodSchema };

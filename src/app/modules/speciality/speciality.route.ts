@@ -6,15 +6,15 @@ import {
   validateParams,
   validateRequestBody,
 } from "../../middleware/zod-middleware";
-import { SpecialityZodSchema } from "../../validation/speciality.zod";
-import { paramsIdZodSchema } from "../../validation/params.zod";
+import { ParamsIdZodSchema } from "../../validation/params.validation";
+import { SpecialityValidation } from "./speciality.validation";
 
 const router: Router = Router();
 
 router.post(
   "/",
   authMiddleware(UserRole.SUPER_ADMIN, UserRole.ADMIN),
-  validateRequestBody(SpecialityZodSchema),
+  validateRequestBody(SpecialityValidation.CreateSpecialityZodSchema),
   SpecialityController.createSpeciality,
 );
 
@@ -22,22 +22,22 @@ router.get("/", SpecialityController.getSpecialities);
 
 router.get(
   "/:id",
-  validateParams(paramsIdZodSchema),
+  validateParams(ParamsIdZodSchema),
   SpecialityController.getSpecialityById,
 );
 
 router.patch(
   "/:id",
   authMiddleware(UserRole.SUPER_ADMIN, UserRole.ADMIN),
-  validateParams(paramsIdZodSchema),
-  validateRequestBody(SpecialityZodSchema),
+  validateParams(ParamsIdZodSchema),
+  validateRequestBody(SpecialityValidation.UpdateSpecialityZodSchema),
   SpecialityController.updateSpeciality,
 );
 
 router.delete(
   "/:id",
   authMiddleware(UserRole.SUPER_ADMIN, UserRole.ADMIN),
-  validateParams(paramsIdZodSchema),
+  validateParams(ParamsIdZodSchema),
   SpecialityController.deleteSpeciality,
 );
 
