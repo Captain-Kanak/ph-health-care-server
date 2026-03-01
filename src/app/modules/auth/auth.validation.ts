@@ -25,4 +25,7 @@ const LoginUserSchema = z.object({
     .max(50, "Password can't be longer than 50 characters"),
 });
 
-export { RegisterPatientSchema, LoginUserSchema };
+export const AuthValidation = {
+  RegisterPatientSchema,
+  LoginUserSchema,
+};

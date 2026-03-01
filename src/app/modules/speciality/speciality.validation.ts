@@ -16,9 +16,7 @@ const CreateSpecialityZodSchema = z.object({
 
 const UpdateSpecialityZodSchema = z
   .object({
-    title: z
-      .string("Title is required")
-      .max(100, "Title can't be longer than 100 characters"),
+    title: z.string().max(100, "Title can't be longer than 100 characters"),
     description: z
       .string()
       .max(500, "Description can't be longer than 500 characters"),

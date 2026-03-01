@@ -6,7 +6,77 @@ import { auth } from "../../lib/auth";
 import { CreateDoctorPayload } from "../../../types/doctor.type";
 import { CreateAdmin } from "./user.interface";
 
-const createAdmin = async (payload: CreateAdmin) => {};
+const createAdmin = async (payload: CreateAdmin) => {
+  try {
+    const { password, admin } = payload;
+    const { name, email, gender, image, phone, address } = admin;
+
+    const isUserExists = await prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+
+    if (isUserExists) {
+      throw new AppError(
+        "User already exists with this email",
+        status.CONFLICT,
+      );
+    }
+
+    const userData = await auth.api.signUpEmail({
+      body: {
+        name,
+        email,
+        password,
+        needPasswordChange: true,
+        role: UserRole.ADMIN,
+      },
+    });
+
+    if (!userData) {
+      throw new AppError(
+        "Failed to create admin user",
+        status.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    const adminData = await prisma.admin.create({
+      data: {
+        userId: userData.user.id,
+        name,
+        email,
+        gender,
+        image,
+        phone,
+        address,
+      },
+    });
+
+    if (!adminData) {
+      await prisma.user.delete({ where: { id: userData.user.id } });
+
+      throw new AppError(
+        "Failed to create admin",
+        status.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    return {
+      user: userData.user,
+      admin: adminData,
+    };
+  } catch (error: any) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+
+    throw new AppError(
+      error.message || "Failed to create admin",
+      status.INTERNAL_SERVER_ERROR,
+    );
+  }
+};
 
 const createDoctor = async (payload: CreateDoctorPayload) => {
   try {
