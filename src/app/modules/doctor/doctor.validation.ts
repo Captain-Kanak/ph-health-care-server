@@ -29,4 +29,6 @@ const UpdateDoctorZodSchema = z
   })
   .partial();
 
-export { UpdateDoctorZodSchema };
+export const DoctorValidation = {
+  UpdateDoctorZodSchema,
+};

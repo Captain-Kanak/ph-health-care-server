@@ -5,9 +5,9 @@ import {
   validateRequestBody,
 } from "../../middleware/zod-middleware";
 import { ParamsIdZodSchema } from "../../validation/params.validation";
-import { UpdateDoctorZodSchema } from "../../validation/doctor.zod";
 import authMiddleware from "../../middleware/auth-middleware";
 import { UserRole } from "@prisma/client";
+import { DoctorValidation } from "./doctor.validation";
 
 const router: Router = Router();
 
@@ -23,7 +23,7 @@ router.patch(
   "/:id",
   authMiddleware(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.DOCTOR),
   validateParams(ParamsIdZodSchema),
-  validateRequestBody(UpdateDoctorZodSchema),
+  validateRequestBody(DoctorValidation.UpdateDoctorZodSchema),
   DoctorController.updateDoctorById,
 );
 

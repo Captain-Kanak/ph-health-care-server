@@ -1,9 +1,10 @@
 import status from "http-status";
 import AppError from "../../errors/AppError";
 import { prisma } from "../../lib/prisma";
-import { UpdateDoctorPayload } from "../../../types/doctor.type";
+import { UpdateDoctor } from "./doctor.interface";
+import { Doctor } from "@prisma/client";
 
-const getAllDoctors = async () => {
+const getAllDoctors = async (): Promise<any> => {
   try {
     const doctors = await prisma.doctor.findMany({
       where: {
@@ -46,7 +47,7 @@ const getAllDoctors = async () => {
   }
 };
 
-const getDoctorById = async (id: string) => {
+const getDoctorById = async (id: string): Promise<any> => {
   try {
     const doctor = await prisma.doctor.findUnique({
       where: {
@@ -96,7 +97,10 @@ const getDoctorById = async (id: string) => {
   }
 };
 
-const updateDoctorById = async (id: string, payload: UpdateDoctorPayload) => {
+const updateDoctorById = async (
+  id: string,
+  payload: UpdateDoctor,
+): Promise<Doctor> => {
   try {
     const doctor = await prisma.doctor.findUnique({ where: { id } });
 
@@ -136,7 +140,7 @@ const updateDoctorById = async (id: string, payload: UpdateDoctorPayload) => {
   }
 };
 
-const deleteDoctorById = async (id: string) => {
+const deleteDoctorById = async (id: string): Promise<Doctor> => {
   try {
     const doctor = await prisma.doctor.findUnique({ where: { id } });
 
