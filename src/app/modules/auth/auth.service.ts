@@ -110,68 +110,75 @@ const loginUser = async (
   token: string;
   redirect: boolean;
   url?: string | undefined;
-  user: User;
+  user: any;
 }> => {
   try {
     const { email, password } = payload;
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const isUserExists = await prisma.user.findUnique({ where: { email } });
 
-    if (user?.status === UserStatus.BLOCKED) {
+    if (!isUserExists) {
+      throw new AppError("User not found", status.NOT_FOUND);
+    }
+
+    if (isUserExists?.status === UserStatus.BLOCKED) {
       throw new AppError("User is blocked", status.FORBIDDEN);
     }
 
-    if (user?.status === UserStatus.DELETED || user?.isDeleted) {
+    if (
+      isUserExists?.status === UserStatus.DELETED ||
+      isUserExists?.isDeleted
+    ) {
       throw new AppError("User is deleted", status.NOT_FOUND);
     }
 
-    const data = await auth.api.signInEmail({
+    const userData = await auth.api.signInEmail({
       body: {
         email,
         password,
       },
     });
 
+    if (!userData) {
+      throw new AppError("Invalid email or password", status.UNAUTHORIZED);
+    }
+
     const accessToken = tokenUtils.createAccessToken({
-      id: data.user.id,
-      name: data.user.name,
-      email: data.user.email,
-      emailVerified: data.user.emailVerified,
-      role: data.user.role,
-      status: data.user.status,
-      isDeleted: data.user.isDeleted,
+      id: userData.user.id,
+      name: userData.user.name,
+      email: userData.user.email,
+      emailVerified: userData.user.emailVerified,
+      role: userData.user.role,
+      status: userData.user.status,
+      isDeleted: userData.user.isDeleted,
     });
 
     const refreshToken = tokenUtils.createRefreshToken({
-      id: data.user.id,
-      name: data.user.name,
-      email: data.user.email,
-      emailVerified: data.user.emailVerified,
-      role: data.user.role,
-      status: data.user.status,
-      isDeleted: data.user.isDeleted,
+      id: userData.user.id,
+      name: userData.user.name,
+      email: userData.user.email,
+      emailVerified: userData.user.emailVerified,
+      role: userData.user.role,
+      status: userData.user.status,
+      isDeleted: userData.user.isDeleted,
+    });
+
+    const user = await prisma.user.findUnique({
+      where: { id: userData.user.id },
+      include: {
+        admin: true,
+        doctor: true,
+        patient: true,
+      },
     });
 
     return {
       accessToken,
       refreshToken,
-      token: data.token,
-      redirect: data.redirect,
-      url: data.url,
-      user: {
-        id: data.user.id,
-        name: data.user.name,
-        email: data.user.email,
-        emailVerified: data.user.emailVerified,
-        image: data.user.image as string | null,
-        role: data.user.role as UserRole,
-        status: data.user.status as UserStatus,
-        needPasswordChange: data.user.needPasswordChange,
-        isDeleted: data.user.isDeleted,
-        deletedAt: data.user.deletedAt as Date | null,
-        createdAt: data.user.createdAt,
-        updatedAt: data.user.updatedAt,
-      },
+      token: userData.token,
+      redirect: userData.redirect,
+      url: userData.url,
+      user,
     };
   } catch (error: any) {
     if (error instanceof AppError) {

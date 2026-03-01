@@ -1,12 +1,13 @@
-import { Speciality, UserRole } from "@prisma/client";
+import { Admin, Speciality, User, UserRole, UserStatus } from "@prisma/client";
 import AppError from "../../errors/AppError";
 import status from "http-status";
 import { prisma } from "../../lib/prisma";
 import { auth } from "../../lib/auth";
-import { CreateDoctorPayload } from "../../../types/doctor.type";
-import { CreateAdmin } from "./user.interface";
+import { CreateAdmin, CreateDoctor } from "./user.interface";
 
-const createAdmin = async (payload: CreateAdmin) => {
+const createAdmin = async (
+  payload: CreateAdmin,
+): Promise<{ user: User; admin: Admin }> => {
   try {
     const { password, admin } = payload;
     const { name, email, gender, image, phone, address } = admin;
@@ -63,7 +64,20 @@ const createAdmin = async (payload: CreateAdmin) => {
     }
 
     return {
-      user: userData.user,
+      user: {
+        id: userData.user.id,
+        name: userData.user.name,
+        email: userData.user.email,
+        emailVerified: userData.user.emailVerified,
+        needPasswordChange: userData.user.needPasswordChange,
+        image: userData.user.image as string | null,
+        role: userData.user.role as UserRole,
+        status: userData.user.status as UserStatus,
+        isDeleted: userData.user.isDeleted,
+        deletedAt: userData.user.deletedAt as Date | null,
+        createdAt: userData.user.createdAt,
+        updatedAt: userData.user.updatedAt,
+      },
       admin: adminData,
     };
   } catch (error: any) {
@@ -78,8 +92,33 @@ const createAdmin = async (payload: CreateAdmin) => {
   }
 };
 
-const createDoctor = async (payload: CreateDoctorPayload) => {
+const createDoctor = async (payload: CreateDoctor): Promise<any> => {
   try {
+    const { password, doctor } = payload;
+
+    const isUserExists = await prisma.user.findUnique({
+      where: {
+        email: doctor.email,
+      },
+    });
+
+    if (isUserExists) {
+      throw new AppError(
+        "User already exists with this email",
+        status.CONFLICT,
+      );
+    }
+
+    const userData = await auth.api.signUpEmail({
+      body: {
+        name: doctor.name,
+        email: doctor.email,
+        password: password,
+        needPasswordChange: true,
+        role: UserRole.DOCTOR,
+      },
+    });
+
     const specialities: Speciality[] = [];
 
     for (const specialityId of payload.specialities) {
@@ -96,41 +135,16 @@ const createDoctor = async (payload: CreateDoctorPayload) => {
       specialities.push(speciality);
     }
 
-    const isUserExists = await prisma.user.findUnique({
-      where: {
-        email: payload.doctor.email,
-      },
-    });
-
-    if (isUserExists) {
-      throw new AppError(
-        "User already exists with this email",
-        status.CONFLICT,
-      );
-    }
-
-    const doctorData = payload.doctor;
-
-    const userData = await auth.api.signUpEmail({
-      body: {
-        name: doctorData.name,
-        email: doctorData.email,
-        password: payload.password,
-        needPasswordChange: true,
-        role: UserRole.DOCTOR,
-      },
-    });
-
-    const doctor = await prisma.$transaction(async (trx) => {
-      const createDoctorData = await trx.doctor.create({
+    const result = await prisma.$transaction(async (trx) => {
+      const createDoctor = await trx.doctor.create({
         data: {
           userId: userData.user.id,
-          ...doctorData,
+          ...doctor,
         },
       });
 
       const specialityData = specialities.map((speciality) => ({
-        doctorId: createDoctorData.id,
+        doctorId: createDoctor.id,
         specialityId: speciality.id,
       }));
 
@@ -138,30 +152,31 @@ const createDoctor = async (payload: CreateDoctorPayload) => {
         data: specialityData,
       });
 
-      const doctor = await trx.doctor.findUnique({
+      const findDoctor = await trx.doctor.findUnique({
         where: {
-          id: createDoctorData.id,
+          id: createDoctor.id,
         },
         select: {
           id: true,
           name: true,
           email: true,
+          image: true,
           phone: true,
           address: true,
+          gender: true,
           registrationNumber: true,
           experience: true,
-          gender: true,
-          appointmentFee: true,
           qualification: true,
-          currentWorkingPlace: true,
           designation: true,
-          image: true,
+          appointmentFee: true,
+          currentWorkingPlace: true,
           user: {
             select: {
               id: true,
               name: true,
               email: true,
               role: true,
+              status: true,
             },
           },
           specialities: {
@@ -170,6 +185,8 @@ const createDoctor = async (payload: CreateDoctorPayload) => {
                 select: {
                   id: true,
                   title: true,
+                  description: true,
+                  icon: true,
                 },
               },
             },
@@ -177,18 +194,23 @@ const createDoctor = async (payload: CreateDoctorPayload) => {
         },
       });
 
-      return doctor;
+      return findDoctor;
     });
 
-    if (!doctor) {
+    if (!result) {
       await prisma.user.delete({
         where: {
           id: userData.user.id,
         },
       });
+
+      throw new AppError(
+        "Failed to create doctor",
+        status.INTERNAL_SERVER_ERROR,
+      );
     }
 
-    return doctor;
+    return result;
   } catch (error: any) {
     throw new AppError(
       error.message || "Failed to create doctor",
