@@ -4,7 +4,7 @@ model Payment {
     amount             Float         @default(0.0)
     transactionId      String        @db.Text
     status             PaymentStatus @default(UNPAID)
-    paymentGatewayData String
+    paymentGatewayData Json?
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt

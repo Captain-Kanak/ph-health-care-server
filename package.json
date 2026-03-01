@@ -5,12 +5,13 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node dist/server.js",
+    "start": "node ./dist/server.js",
     "build": "tsc",
-    "dev": "tsx watch src/server.ts",
+    "dev": "tsx watch ./src/server.ts",
     "lint": "eslint ./src/**/*.ts",
     "migrate": "prisma migrate dev",
-    "generate": "prisma generate"
+    "generate": "prisma generate",
+    "seedSuperAdmin": "tsx ./src/app/seeds/seedSuperAdmin.ts"
   },
   "type": "module",
   "keywords": [],

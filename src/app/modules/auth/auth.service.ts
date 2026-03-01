@@ -11,7 +11,7 @@ import { tokenUtils } from "../../utils/token";
 
 const registerPatient = async (payload: RegisterPatientPayload) => {
   try {
-    const { name, email, password } = payload;
+    const { name, email, password, gender } = payload;
 
     const isUserExist = await prisma.user.findUnique({ where: { email } });
 
@@ -33,6 +33,7 @@ const registerPatient = async (payload: RegisterPatientPayload) => {
           userId: data.user.id,
           name: data.user.name,
           email: data.user.email,
+          gender,
         },
       });
 
