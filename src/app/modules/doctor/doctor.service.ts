@@ -2,7 +2,8 @@ import status from "http-status";
 import AppError from "../../errors/AppError";
 import { prisma } from "../../lib/prisma";
 import { UpdateDoctor } from "./doctor.interface";
-import { Doctor } from "@prisma/client";
+import { Doctor, UserRole } from "@prisma/client";
+import { DecodedUser } from "../../../types/auth.type";
 
 const getAllDoctors = async (): Promise<any> => {
   try {
@@ -100,12 +101,23 @@ const getDoctorById = async (id: string): Promise<any> => {
 const updateDoctorById = async (
   id: string,
   payload: UpdateDoctor,
+  user: DecodedUser,
 ): Promise<Doctor> => {
   try {
+    const isAdmin =
+      user.role === UserRole.SUPER_ADMIN || user.role === UserRole.ADMIN;
+
     const doctor = await prisma.doctor.findUnique({ where: { id } });
 
     if (!doctor) {
       throw new AppError("Doctor not found", status.NOT_FOUND);
+    }
+
+    if (!isAdmin && user.id !== doctor.userId) {
+      throw new AppError(
+        "You are not authorized to update this doctor",
+        status.FORBIDDEN,
+      );
     }
 
     const { specialities, ...restPayload } = payload;
@@ -140,12 +152,25 @@ const updateDoctorById = async (
   }
 };
 
-const deleteDoctorById = async (id: string): Promise<Doctor> => {
+const deleteDoctorById = async (
+  id: string,
+  user: DecodedUser,
+): Promise<Doctor> => {
   try {
+    const isAdmin =
+      user.role === UserRole.SUPER_ADMIN || user.role === UserRole.ADMIN;
+
     const doctor = await prisma.doctor.findUnique({ where: { id } });
 
     if (!doctor) {
       throw new AppError("Doctor not found", status.NOT_FOUND);
+    }
+
+    if (!isAdmin && user.id !== doctor.userId) {
+      throw new AppError(
+        "You are not authorized to delete this doctor",
+        status.FORBIDDEN,
+      );
     }
 
     const deletedDoctor = await prisma.doctor.update({

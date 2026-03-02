@@ -3,6 +3,7 @@ import { catchAsync } from "../../shared/catchAsync";
 import { DoctorService } from "./doctor.service";
 import { sendResponse } from "../../shared/sendResponse";
 import status from "http-status";
+import { DecodedUser } from "../../../types/auth.type";
 
 const getAllDoctors = catchAsync(async (req: Request, res: Response) => {
   const result = await DoctorService.getAllDoctors();
@@ -33,8 +34,13 @@ const getDoctorById = catchAsync(async (req: Request, res: Response) => {
 const updateDoctorById = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const payload = req.body;
+  const user = req.user;
 
-  const result = await DoctorService.updateDoctorById(id as string, payload);
+  const result = await DoctorService.updateDoctorById(
+    id as string,
+    payload,
+    user as DecodedUser,
+  );
 
   sendResponse(res, {
     statusCode: status.OK,
@@ -46,8 +52,12 @@ const updateDoctorById = catchAsync(async (req: Request, res: Response) => {
 
 const deleteDoctorById = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
+  const user = req.user;
 
-  const result = await DoctorService.deleteDoctorById(id as string);
+  const result = await DoctorService.deleteDoctorById(
+    id as string,
+    user as DecodedUser,
+  );
 
   sendResponse(res, {
     statusCode: status.OK,
