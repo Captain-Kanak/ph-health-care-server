@@ -2,7 +2,8 @@ import status from "http-status";
 import AppError from "../../errors/AppError";
 import { prisma } from "../../lib/prisma";
 import { UpdateAdmin } from "./admin.interface";
-import { Admin } from "@prisma/client";
+import { Admin, UserRole } from "@prisma/client";
+import { DecodedUser } from "../../../types/auth.type";
 
 const getAllAdmins = async (): Promise<Admin[]> => {
   try {
@@ -41,12 +42,22 @@ const getAdminById = async (id: string): Promise<Admin> => {
 const updateAdminById = async (
   id: string,
   payload: UpdateAdmin,
+  user: DecodedUser,
 ): Promise<Admin> => {
   try {
+    const isSuperAdmin = user.role === UserRole.SUPER_ADMIN;
+
     const admin = await prisma.admin.findUnique({ where: { id } });
 
     if (!admin) {
       throw new AppError("Admin not found", status.NOT_FOUND);
+    }
+
+    if (!isSuperAdmin && user.id !== admin.userId) {
+      throw new AppError(
+        "You are not authorized to update this admin",
+        status.FORBIDDEN,
+      );
     }
 
     const updatedAdmin = await prisma.admin.update({
@@ -67,12 +78,24 @@ const updateAdminById = async (
   }
 };
 
-const deleteAdminById = async (id: string): Promise<Admin> => {
+const deleteAdminById = async (
+  id: string,
+  user: DecodedUser,
+): Promise<Admin> => {
   try {
+    const isSuperAdmin = user.role === UserRole.SUPER_ADMIN;
+
     const admin = await prisma.admin.findUnique({ where: { id } });
 
     if (!admin) {
       throw new AppError("Admin not found", status.NOT_FOUND);
+    }
+
+    if (!isSuperAdmin && user.id !== admin.userId) {
+      throw new AppError(
+        "You are not authorized to delete this admin",
+        status.FORBIDDEN,
+      );
     }
 
     const deletedAdmin = await prisma.admin.delete({ where: { id } });
