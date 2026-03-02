@@ -170,6 +170,7 @@ const deleteDoctorById = async (
       where: { id },
       data: {
         isDeleted: true,
+        deletedAt: new Date(),
       },
       include: {
         specialities: {

@@ -98,7 +98,13 @@ const deleteAdminById = async (
       );
     }
 
-    const deletedAdmin = await prisma.admin.delete({ where: { id } });
+    const deletedAdmin = await prisma.admin.update({
+      where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+      },
+    });
 
     return deletedAdmin;
   } catch (error: any) {

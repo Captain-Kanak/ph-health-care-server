@@ -105,7 +105,13 @@ const deleteSpeciality = async (id: string): Promise<Speciality> => {
       throw new AppError("Speciality not found", status.NOT_FOUND);
     }
 
-    const deletedSpeciality = await prisma.speciality.delete({ where: { id } });
+    const deletedSpeciality = await prisma.speciality.update({
+      where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+      },
+    });
 
     return deletedSpeciality;
   } catch (error: any) {
