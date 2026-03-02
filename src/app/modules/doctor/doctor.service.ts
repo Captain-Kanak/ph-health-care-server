@@ -107,36 +107,50 @@ const updateDoctorById = async (
     const isAdmin =
       user.role === UserRole.SUPER_ADMIN || user.role === UserRole.ADMIN;
 
-    const doctor = await prisma.doctor.findUnique({ where: { id } });
+    const isDoctorExists = await prisma.doctor.findUnique({ where: { id } });
 
-    if (!doctor) {
+    if (!isDoctorExists) {
       throw new AppError("Doctor not found", status.NOT_FOUND);
     }
 
-    if (!isAdmin && user.id !== doctor.userId) {
+    if (!isAdmin && user.id !== isDoctorExists.userId) {
       throw new AppError(
         "You are not authorized to update this doctor",
         status.FORBIDDEN,
       );
     }
 
-    const { specialities, ...restPayload } = payload;
-    const updateData: any = {
-      ...restPayload,
-    };
+    const { specialities, doctor } = payload;
 
     if (specialities) {
-      updateData.specialities = {
-        set: [],
-        connect: specialities.map((specialityId) => ({
-          id: specialityId,
-        })),
-      };
+      for (const speciality of specialities) {
+        const shouldDelete = speciality.shouldDelete;
+
+        if (shouldDelete) {
+          await prisma.doctorSpeciality.delete({
+            where: {
+              doctorId_specialityId: {
+                doctorId: id,
+                specialityId: speciality.specialityId,
+              },
+            },
+          });
+        }
+
+        if (!shouldDelete) {
+          await prisma.doctorSpeciality.create({
+            data: {
+              doctorId: id,
+              specialityId: speciality.specialityId,
+            },
+          });
+        }
+      }
     }
 
     const updatedDoctor = await prisma.doctor.update({
       where: { id },
-      data: updateData,
+      data: doctor,
     });
 
     return updatedDoctor;
