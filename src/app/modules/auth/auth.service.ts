@@ -110,7 +110,7 @@ const loginUser = async (
   token: string;
   redirect: boolean;
   url?: string | undefined;
-  user: any;
+  user: User;
 }> => {
   try {
     const { email, password } = payload;
@@ -171,6 +171,10 @@ const loginUser = async (
         patient: true,
       },
     });
+
+    if (!user) {
+      throw new AppError("User not found", status.NOT_FOUND);
+    }
 
     return {
       accessToken,

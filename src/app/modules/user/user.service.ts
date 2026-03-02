@@ -1,4 +1,11 @@
-import { Admin, Speciality, User, UserRole, UserStatus } from "@prisma/client";
+import {
+  Admin,
+  Doctor,
+  Speciality,
+  User,
+  UserRole,
+  UserStatus,
+} from "@prisma/client";
 import AppError from "../../errors/AppError";
 import status from "http-status";
 import { prisma } from "../../lib/prisma";
@@ -92,7 +99,7 @@ const createAdmin = async (
   }
 };
 
-const createDoctor = async (payload: CreateDoctor): Promise<any> => {
+const createDoctor = async (payload: CreateDoctor): Promise<Doctor> => {
   try {
     const { password, doctor } = payload;
 
@@ -156,39 +163,10 @@ const createDoctor = async (payload: CreateDoctor): Promise<any> => {
         where: {
           id: createDoctor.id,
         },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          image: true,
-          phone: true,
-          address: true,
-          gender: true,
-          registrationNumber: true,
-          experience: true,
-          qualification: true,
-          designation: true,
-          appointmentFee: true,
-          currentWorkingPlace: true,
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              role: true,
-              status: true,
-            },
-          },
+        include: {
           specialities: {
-            select: {
-              speciality: {
-                select: {
-                  id: true,
-                  title: true,
-                  description: true,
-                  icon: true,
-                },
-              },
+            include: {
+              speciality: true,
             },
           },
         },

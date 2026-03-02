@@ -5,35 +5,16 @@ import { UpdateDoctor } from "./doctor.interface";
 import { Doctor, UserRole } from "@prisma/client";
 import { DecodedUser } from "../../../types/auth.type";
 
-const getAllDoctors = async (): Promise<any> => {
+const getAllDoctors = async (): Promise<Doctor[]> => {
   try {
     const doctors = await prisma.doctor.findMany({
       where: {
         isDeleted: false,
       },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        image: true,
-        phone: true,
-        address: true,
-        registrationNumber: true,
-        experience: true,
-        gender: true,
-        appointmentFee: true,
-        qualification: true,
-        currentWorkingPlace: true,
-        designation: true,
-        isDeleted: true,
+      include: {
         specialities: {
-          select: {
-            speciality: {
-              select: {
-                id: true,
-                title: true,
-              },
-            },
+          include: {
+            speciality: true,
           },
         },
       },
@@ -48,34 +29,16 @@ const getAllDoctors = async (): Promise<any> => {
   }
 };
 
-const getDoctorById = async (id: string): Promise<any> => {
+const getDoctorById = async (id: string): Promise<Doctor> => {
   try {
     const doctor = await prisma.doctor.findUnique({
       where: {
         id,
       },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        image: true,
-        phone: true,
-        address: true,
-        registrationNumber: true,
-        experience: true,
-        gender: true,
-        appointmentFee: true,
-        qualification: true,
-        currentWorkingPlace: true,
-        designation: true,
+      include: {
         specialities: {
-          select: {
-            speciality: {
-              select: {
-                id: true,
-                title: true,
-              },
-            },
+          include: {
+            speciality: true,
           },
         },
       },
@@ -122,38 +85,54 @@ const updateDoctorById = async (
 
     const { specialities, doctor } = payload;
 
-    if (specialities) {
-      for (const speciality of specialities) {
-        const shouldDelete = speciality.shouldDelete;
+    const result = await prisma.$transaction(async (trx) => {
+      if (specialities && specialities.length > 0) {
+        for (const speciality of specialities) {
+          const shouldDelete = speciality.shouldDelete;
 
-        if (shouldDelete) {
-          await prisma.doctorSpeciality.delete({
-            where: {
-              doctorId_specialityId: {
+          if (shouldDelete) {
+            await trx.doctorSpeciality.delete({
+              where: {
+                doctorId_specialityId: {
+                  doctorId: id,
+                  specialityId: speciality.specialityId,
+                },
+              },
+            });
+          } else {
+            await trx.doctorSpeciality.upsert({
+              where: {
+                doctorId_specialityId: {
+                  doctorId: id,
+                  specialityId: speciality.specialityId,
+                },
+              },
+              create: {
                 doctorId: id,
                 specialityId: speciality.specialityId,
               },
-            },
-          });
-        }
-
-        if (!shouldDelete) {
-          await prisma.doctorSpeciality.create({
-            data: {
-              doctorId: id,
-              specialityId: speciality.specialityId,
-            },
-          });
+              update: {},
+            });
+          }
         }
       }
-    }
 
-    const updatedDoctor = await prisma.doctor.update({
-      where: { id },
-      data: doctor,
+      const updatedDoctor = await trx.doctor.update({
+        where: { id },
+        data: doctor,
+        include: {
+          specialities: {
+            include: {
+              speciality: true,
+            },
+          },
+        },
+      });
+
+      return updatedDoctor;
     });
 
-    return updatedDoctor;
+    return result;
   } catch (error: any) {
     if (error instanceof AppError) {
       throw error;
@@ -191,6 +170,13 @@ const deleteDoctorById = async (
       where: { id },
       data: {
         isDeleted: true,
+      },
+      include: {
+        specialities: {
+          include: {
+            speciality: true,
+          },
+        },
       },
     });
 
