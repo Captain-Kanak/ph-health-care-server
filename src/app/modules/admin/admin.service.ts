@@ -87,9 +87,9 @@ const deleteAdminById = async (id: string, user: User): Promise<Admin> => {
       throw new AppError("Admin not found", status.NOT_FOUND);
     }
 
-    if (!isSuperAdmin && user.id !== admin.userId) {
+    if (user.id === admin.userId) {
       throw new AppError(
-        "You are not authorized to delete this admin",
+        "You cannot delete your own admin account",
         status.FORBIDDEN,
       );
     }

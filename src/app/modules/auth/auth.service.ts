@@ -5,6 +5,10 @@ import { Patient, User, UserRole, UserStatus } from "@prisma/client";
 import status from "http-status";
 import { tokenUtils } from "../../utils/token";
 import { LoginUserPayload, RegisterPatientPayload } from "./auth.interface";
+import { count } from "node:console";
+import { jwtUtils } from "../../utils/jwt";
+import { env } from "../../../config/env";
+import ms, { StringValue } from "ms";
 
 const registerPatient = async (
   payload: RegisterPatientPayload,
@@ -204,6 +208,7 @@ const getMe = async (user: User): Promise<User> => {
         admin: true,
         doctor: {
           include: {
+            _count: true,
             specialities: {
               include: {
                 speciality: true,
@@ -213,6 +218,7 @@ const getMe = async (user: User): Promise<User> => {
         },
         patient: {
           include: {
+            _count: true,
             patientHealthData: true,
             medicalReports: true,
             appointments: {
@@ -242,8 +248,74 @@ const getMe = async (user: User): Promise<User> => {
   }
 };
 
+const getNewTokens = async (
+  refreshToken: string,
+  sessionToken: string,
+): Promise<{ accessToken: string; refreshToken: string; token: string }> => {
+  try {
+    const isSessionTokenExists = await prisma.session.findUnique({
+      where: { token: sessionToken },
+      include: { user: true },
+    });
+
+    if (!isSessionTokenExists) {
+      throw new AppError("Invalid session token", status.UNAUTHORIZED);
+    }
+
+    const verifiedRefreshToken = jwtUtils.verifyToken(
+      refreshToken,
+      env.REFRESH_TOKEN_SECRET,
+    );
+
+    if (!verifiedRefreshToken) {
+      throw new AppError("Invalid refresh token", status.UNAUTHORIZED);
+    }
+
+    const newAccessToken = tokenUtils.createAccessToken({
+      id: verifiedRefreshToken.id,
+      name: verifiedRefreshToken.name,
+      email: verifiedRefreshToken.email,
+      emailVerified: verifiedRefreshToken.emailVerified,
+      role: verifiedRefreshToken.role,
+      status: verifiedRefreshToken.status,
+      isDeleted: verifiedRefreshToken.isDeleted,
+    });
+
+    const newRefreshToken = tokenUtils.createRefreshToken({
+      id: verifiedRefreshToken.id,
+      name: verifiedRefreshToken.name,
+      email: verifiedRefreshToken.email,
+      emailVerified: verifiedRefreshToken.emailVerified,
+      role: verifiedRefreshToken.role,
+      status: verifiedRefreshToken.status,
+      isDeleted: verifiedRefreshToken.isDeleted,
+    });
+
+    const updatedSession = await prisma.session.update({
+      where: { token: sessionToken },
+      data: {
+        expiresAt: new Date(
+          Date.now() + ms(env.BETTER_AUTH_SESSION_EXPIRES_IN as StringValue),
+        ),
+      },
+    });
+
+    return {
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+      token: updatedSession.token,
+    };
+  } catch (error: any) {
+    throw new AppError(
+      error.message || "Failed to get new token",
+      status.INTERNAL_SERVER_ERROR,
+    );
+  }
+};
+
 export const AuthService = {
   registerPatient,
   loginUser,
   getMe,
+  getNewTokens,
 };
