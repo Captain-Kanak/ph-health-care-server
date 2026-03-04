@@ -20,6 +20,6 @@ router.post(
 
 router.get("/me", authMiddleware(), AuthController.getMe);
 
-router.get("/new-tokens", authMiddleware(), AuthController.getNewTokens);
+router.get("/refresh-tokens", authMiddleware(), AuthController.getNewTokens);
 
 export { router as AuthRoutes };
