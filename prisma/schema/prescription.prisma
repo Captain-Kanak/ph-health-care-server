@@ -1,0 +1,14 @@
+model Prescription {
+    id            String @id @default(uuid(7))
+    appointmentId String
+    instractions  String @db.Text
+
+    followupDate DateTime?
+    createdAt    DateTime  @default(now())
+    updatedAt    DateTime  @updatedAt
+
+    appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+    @@unique([appointmentId])
+    @@map("prescriptions")
+}

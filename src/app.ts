@@ -3,16 +3,16 @@ import { IndexRoutes } from "./app/routes";
 import globalErrorHandler from "./app/middleware/error-handler";
 import notFoundHandler from "./app/middleware/notFound-handler";
 import status from "http-status";
+import cookieParser from "cookie-parser";
 
 const app: Application = express();
 
-// Enable URL-encoded form data parsing
 app.use(express.urlencoded({ extended: true }));
 
-// Middleware to parse JSON bodies
 app.use(express.json());
 
-// Basic route
+app.use(cookieParser());
+
 app.get("/", (req: Request, res: Response) => {
   return res.status(status.OK).json({
     success: true,
@@ -20,13 +20,10 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
-// API routes
 app.use("/api/v1", IndexRoutes);
 
-// Route not found handler
 app.use(notFoundHandler);
 
-// Global error handler
 app.use(globalErrorHandler);
 
 export default app;
