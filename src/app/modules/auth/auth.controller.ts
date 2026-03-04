@@ -4,6 +4,7 @@ import { AuthService } from "./auth.service";
 import { sendResponse } from "../../shared/sendResponse";
 import status from "http-status";
 import { tokenUtils } from "../../utils/token";
+import { User } from "@prisma/client";
 
 const registerPatient = catchAsync(async (req: Request, res: Response) => {
   const payload = req.body;
@@ -51,7 +52,21 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getMe = catchAsync(async (req: Request, res: Response) => {
+  const user = req.user;
+
+  const result = await AuthService.getMe(user as User);
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: "User fetched successfully",
+    data: result,
+  });
+});
+
 export const AuthController = {
   registerPatient,
   loginUser,
+  getMe,
 };

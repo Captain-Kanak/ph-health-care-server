@@ -196,7 +196,54 @@ const loginUser = async (
   }
 };
 
+const getMe = async (user: User): Promise<User> => {
+  try {
+    const isUserExists = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: {
+        admin: true,
+        doctor: {
+          include: {
+            specialities: {
+              include: {
+                speciality: true,
+              },
+            },
+          },
+        },
+        patient: {
+          include: {
+            patientHealthData: true,
+            medicalReports: true,
+            appointments: {
+              include: {
+                prescription: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!isUserExists) {
+      throw new AppError("User not found", status.NOT_FOUND);
+    }
+
+    return isUserExists;
+  } catch (error: any) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+
+    throw new AppError(
+      error.message || "Failed to get user",
+      status.INTERNAL_SERVER_ERROR,
+    );
+  }
+};
+
 export const AuthService = {
   registerPatient,
   loginUser,
+  getMe,
 };

@@ -17,4 +17,6 @@ router.post(
   AuthController.loginUser,
 );
 
+router.get("/get-me", AuthController.getMe);
+
 export { router as AuthRoutes };
