@@ -1,4 +1,4 @@
-model Patient {
+model Admin {
     id        String  @id @default(uuid(7))
     userId    String
     name      String  @db.VarChar(50)
@@ -15,13 +15,8 @@ model Patient {
 
     user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
-    patientHealthData PatientHealthData?
-
-    appointments   Appointment[]
-    medicalReports MedicalReport[]
-
     @@unique([userId])
     @@unique([email])
-    @@index([isDeleted], name: "idx_patient_isDeleted")
-    @@map("patients")
+    @@index([isDeleted], name: "idx_admin_isDeleted")
+    @@map("admins")
 }
