@@ -2,8 +2,7 @@ import status from "http-status";
 import AppError from "../../errors/AppError";
 import { prisma } from "../../lib/prisma";
 import { UpdateDoctor } from "./doctor.interface";
-import { Doctor, UserRole } from "@prisma/client";
-import { DecodedUser } from "../../../types/auth.type";
+import { Doctor, User, UserRole } from "@prisma/client";
 
 const getAllDoctors = async (): Promise<Doctor[]> => {
   try {
@@ -64,7 +63,7 @@ const getDoctorById = async (id: string): Promise<Doctor> => {
 const updateDoctorById = async (
   id: string,
   payload: UpdateDoctor,
-  user: DecodedUser,
+  user: User,
 ): Promise<Doctor> => {
   try {
     const isAdmin =
@@ -145,10 +144,7 @@ const updateDoctorById = async (
   }
 };
 
-const deleteDoctorById = async (
-  id: string,
-  user: DecodedUser,
-): Promise<Doctor> => {
+const deleteDoctorById = async (id: string, user: User): Promise<Doctor> => {
   try {
     const isAdmin =
       user.role === UserRole.SUPER_ADMIN || user.role === UserRole.ADMIN;
