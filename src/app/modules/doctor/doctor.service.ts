@@ -166,22 +166,46 @@ const deleteDoctorById = async (
       );
     }
 
-    const deletedDoctor = await prisma.doctor.update({
-      where: { id },
-      data: {
-        isDeleted: true,
-        deletedAt: new Date(),
-      },
-      include: {
-        specialities: {
-          include: {
-            speciality: true,
+    const result = await prisma.$transaction(async (trx) => {
+      const deletedDoctor = await prisma.doctor.update({
+        where: { id },
+        data: {
+          isDeleted: true,
+          deletedAt: new Date(),
+        },
+        include: {
+          specialities: {
+            include: {
+              speciality: true,
+            },
           },
         },
-      },
+      });
+
+      await trx.user.update({
+        where: { id: deletedDoctor.userId },
+        data: {
+          isDeleted: true,
+          deletedAt: new Date(),
+        },
+      });
+
+      await trx.doctorSpeciality.deleteMany({
+        where: {
+          doctorId: id,
+        },
+      });
+
+      await trx.session.deleteMany({
+        where: {
+          userId: deletedDoctor.userId,
+        },
+      });
+
+      return deletedDoctor;
     });
 
-    return deletedDoctor;
+    return result;
   } catch (error: any) {
     if (error instanceof AppError) {
       throw error;

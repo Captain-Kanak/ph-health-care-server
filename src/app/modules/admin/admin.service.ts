@@ -98,15 +98,29 @@ const deleteAdminById = async (
       );
     }
 
-    const deletedAdmin = await prisma.admin.update({
-      where: { id },
-      data: {
-        isDeleted: true,
-        deletedAt: new Date(),
-      },
+    const result = await prisma.$transaction(async (trx) => {
+      const deletedAdmin = await trx.admin.update({
+        where: { id },
+        data: {
+          isDeleted: true,
+          deletedAt: new Date(),
+        },
+      });
+
+      await trx.user.update({
+        where: { id: admin.userId },
+        data: {
+          isDeleted: true,
+          deletedAt: new Date(),
+        },
+      });
+
+      await trx.session.deleteMany({ where: { userId: admin.userId } });
+
+      return deletedAdmin;
     });
 
-    return deletedAdmin;
+    return result;
   } catch (error: any) {
     if (error instanceof AppError) {
       throw error;
