@@ -4,7 +4,11 @@ import { prisma } from "../../lib/prisma";
 import { Patient, User, UserRole, UserStatus } from "@prisma/client";
 import status from "http-status";
 import { tokenUtils } from "../../utils/token";
-import { LoginUserPayload, RegisterPatientPayload } from "./auth.interface";
+import {
+  ChangePassword,
+  LoginUserPayload,
+  RegisterPatientPayload,
+} from "./auth.interface";
 import { count } from "node:console";
 import { jwtUtils } from "../../utils/jwt";
 import { env } from "../../../config/env";
@@ -313,9 +317,54 @@ const getNewTokens = async (
   }
 };
 
+const changePassword = async (
+  payload: ChangePassword,
+  sessionToken: string,
+): Promise<Record<string, any>> => {
+  try {
+    const authSession = await auth.api.getSession({
+      headers: new Headers({
+        Authorization: `Bearer ${sessionToken}`,
+      }),
+    });
+
+    if (!authSession) {
+      throw new AppError("Invalid session token", status.UNAUTHORIZED);
+    }
+
+    const { oldPassword, newPassword } = payload;
+
+    const result = await auth.api.changePassword({
+      body: {
+        currentPassword: oldPassword,
+        newPassword,
+        revokeOtherSessions: true,
+      },
+      headers: new Headers({
+        Authorization: `Bearer ${sessionToken}`,
+      }),
+    });
+
+    if (!result) {
+      throw new AppError(
+        "Failed to change password",
+        status.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    return result;
+  } catch (error: any) {
+    throw new AppError(
+      error.message || "Failed to change password",
+      status.INTERNAL_SERVER_ERROR,
+    );
+  }
+};
+
 export const AuthService = {
   registerPatient,
   loginUser,
   getMe,
   getNewTokens,
+  changePassword,
 };

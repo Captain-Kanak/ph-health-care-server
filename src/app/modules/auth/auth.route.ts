@@ -22,4 +22,10 @@ router.get("/me", authMiddleware(), AuthController.getMe);
 
 router.get("/refresh-tokens", authMiddleware(), AuthController.getNewTokens);
 
+router.post(
+  "/change-password",
+  authMiddleware(),
+  AuthController.changePassword,
+);
+
 export { router as AuthRoutes };

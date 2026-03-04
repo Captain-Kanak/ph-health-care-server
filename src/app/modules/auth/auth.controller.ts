@@ -5,6 +5,7 @@ import { sendResponse } from "../../shared/sendResponse";
 import status from "http-status";
 import { tokenUtils } from "../../utils/token";
 import { User } from "@prisma/client";
+import { cookieUtils } from "../../utils/cookie";
 
 const registerPatient = catchAsync(async (req: Request, res: Response) => {
   const payload = req.body;
@@ -66,8 +67,8 @@ const getMe = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getNewTokens = catchAsync(async (req: Request, res: Response) => {
-  const refreshToken = req.cookies["refreshToken"];
-  const sessionToken = req.cookies["better-auth.session_token"];
+  const refreshToken = cookieUtils.getCookie(req, "refreshToken");
+  const sessionToken = cookieUtils.getCookie(req, "better-auth.session_token");
 
   const result = await AuthService.getNewTokens(refreshToken, sessionToken);
   const { accessToken, refreshToken: newRefreshToken, token } = result;
@@ -84,9 +85,24 @@ const getNewTokens = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const changePassword = catchAsync(async (req: Request, res: Response) => {
+  const payload = req.body;
+  const sessionToken = cookieUtils.getCookie(req, "better-auth.session_token");
+
+  const result = await AuthService.changePassword(payload, sessionToken);
+
+  sendResponse(res, {
+    statusCode: status.OK,
+    success: true,
+    message: "Password changed successfully",
+    data: result,
+  });
+});
+
 export const AuthController = {
   registerPatient,
   loginUser,
   getMe,
   getNewTokens,
+  changePassword,
 };

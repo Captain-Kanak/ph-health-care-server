@@ -4,6 +4,7 @@ import { prisma } from "./prisma";
 import { UserRole, UserStatus } from "@prisma/client";
 import { env } from "../../config/env";
 import ms, { StringValue } from "ms";
+import { bearer } from "better-auth/plugins";
 
 export const auth = betterAuth({
   secret: env.BETTER_AUTH_SECRET,
@@ -24,6 +25,7 @@ export const auth = betterAuth({
     secure: env.NODE_ENV === "production",
     sameSite: "lax",
   },
+  plugins: [bearer()],
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
