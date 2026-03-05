@@ -30,4 +30,6 @@ router.post(
 
 router.post("/logout", authMiddleware(), AuthController.logoutUser);
 
+router.post("/verify-email", AuthController.verifyEmail);
+
 export { router as AuthRoutes };

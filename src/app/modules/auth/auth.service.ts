@@ -405,6 +405,33 @@ const logoutUser = async (sessionToken: string) => {
   }
 };
 
+const verifyEmail = async (email: string, otp: string) => {
+  try {
+    const result = await auth.api.verifyEmailOTP({
+      body: {
+        email,
+        otp,
+      },
+    });
+
+    if (result.status && !result.user.emailVerified) {
+      await prisma.user.update({
+        where: {
+          email,
+        },
+        data: {
+          emailVerified: true,
+        },
+      });
+    }
+  } catch (error: any) {
+    throw new AppError(
+      error.message || "Failed to verify email",
+      status.INTERNAL_SERVER_ERROR,
+    );
+  }
+};
+
 export const AuthService = {
   registerPatient,
   loginUser,
@@ -412,4 +439,5 @@ export const AuthService = {
   getNewTokens,
   changePassword,
   logoutUser,
+  verifyEmail,
 };
