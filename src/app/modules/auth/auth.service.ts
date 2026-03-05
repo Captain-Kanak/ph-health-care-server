@@ -352,7 +352,31 @@ const changePassword = async (
       );
     }
 
-    return result;
+    const newAccessToken = tokenUtils.createAccessToken({
+      id: result.user.id,
+      name: result.user.name,
+      email: result.user.email,
+      emailVerified: result.user.emailVerified,
+      role: result.user.role,
+      status: result.user.status,
+      isDeleted: result.user.isDeleted,
+    });
+
+    const newRefreshToken = tokenUtils.createRefreshToken({
+      id: result.user.id,
+      name: result.user.name,
+      email: result.user.email,
+      emailVerified: result.user.emailVerified,
+      role: result.user.role,
+      status: result.user.status,
+      isDeleted: result.user.isDeleted,
+    });
+
+    return {
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+      ...result,
+    };
   } catch (error: any) {
     throw new AppError(
       error.message || "Failed to change password",
