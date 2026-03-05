@@ -9,7 +9,6 @@ import {
   LoginUserPayload,
   RegisterPatientPayload,
 } from "./auth.interface";
-import { count } from "node:console";
 import { jwtUtils } from "../../utils/jwt";
 import { env } from "../../../config/env";
 import ms, { StringValue } from "ms";
@@ -385,10 +384,32 @@ const changePassword = async (
   }
 };
 
+const logoutUser = async (sessionToken: string) => {
+  try {
+    const result = await auth.api.signOut({
+      headers: new Headers({
+        Authorization: `Bearer ${sessionToken}`,
+      }),
+    });
+
+    if (!result.success) {
+      throw new AppError("Failed to logout user", status.INTERNAL_SERVER_ERROR);
+    }
+
+    return result;
+  } catch (error: any) {
+    throw new AppError(
+      error.message || "Failed to logout user",
+      status.INTERNAL_SERVER_ERROR,
+    );
+  }
+};
+
 export const AuthService = {
   registerPatient,
   loginUser,
   getMe,
   getNewTokens,
   changePassword,
+  logoutUser,
 };

@@ -20,12 +20,14 @@ router.post(
 
 router.get("/me", authMiddleware(), AuthController.getMe);
 
-router.get("/refresh-tokens", authMiddleware(), AuthController.getNewTokens);
+router.post("/refresh-tokens", authMiddleware(), AuthController.getNewTokens);
 
 router.post(
   "/change-password",
   authMiddleware(),
   AuthController.changePassword,
 );
+
+router.post("/logout", authMiddleware(), AuthController.logoutUser);
 
 export { router as AuthRoutes };
