@@ -23,7 +23,7 @@ const registerPatient = async (
   patient: Patient;
 }> => {
   try {
-    const { name, email, password, gender } = payload;
+    const { name, email, password } = payload;
 
     const isUserExist = await prisma.user.findUnique({ where: { email } });
 
@@ -44,7 +44,6 @@ const registerPatient = async (
         userId: data.user.id,
         name: data.user.name,
         email: data.user.email,
-        gender,
       },
     });
 
@@ -309,6 +308,10 @@ const getNewTokens = async (
       token: updatedSession.token,
     };
   } catch (error: any) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+
     throw new AppError(
       error.message || "Failed to get new token",
       status.INTERNAL_SERVER_ERROR,
@@ -377,6 +380,10 @@ const changePassword = async (
       ...result,
     };
   } catch (error: any) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+
     throw new AppError(
       error.message || "Failed to change password",
       status.INTERNAL_SERVER_ERROR,
@@ -398,6 +405,10 @@ const logoutUser = async (sessionToken: string) => {
 
     return result;
   } catch (error: any) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+
     throw new AppError(
       error.message || "Failed to logout user",
       status.INTERNAL_SERVER_ERROR,
@@ -432,6 +443,84 @@ const verifyEmail = async (email: string, otp: string) => {
   }
 };
 
+const forgetPassword = async (email: string) => {
+  try {
+    const isUserExists = await prisma.user.findUnique({ where: { email } });
+
+    if (!isUserExists) {
+      throw new AppError("User not found", status.NOT_FOUND);
+    }
+
+    if (isUserExists.isDeleted || isUserExists.status === UserStatus.DELETED) {
+      throw new AppError("User is deleted", status.NOT_FOUND);
+    }
+
+    if (isUserExists.status === UserStatus.BLOCKED) {
+      throw new AppError("User is blocked", status.FORBIDDEN);
+    }
+
+    if (!isUserExists.emailVerified) {
+      throw new AppError("Email is not verified", status.UNAUTHORIZED);
+    }
+
+    await auth.api.requestPasswordResetEmailOTP({
+      body: {
+        email,
+      },
+    });
+  } catch (error: any) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+
+    throw new AppError(
+      error.message || "Failed to forget password",
+      status.INTERNAL_SERVER_ERROR,
+    );
+  }
+};
+
+const resetPassword = async (email: string, otp: string, password: string) => {
+  try {
+    const isUserExists = await prisma.user.findUnique({ where: { email } });
+
+    if (!isUserExists) {
+      throw new AppError("User not found", status.NOT_FOUND);
+    }
+
+    if (isUserExists.isDeleted || isUserExists.status === UserStatus.DELETED) {
+      throw new AppError("User is deleted", status.NOT_FOUND);
+    }
+
+    if (isUserExists.status === UserStatus.BLOCKED) {
+      throw new AppError("User is blocked", status.FORBIDDEN);
+    }
+
+    if (!isUserExists.emailVerified) {
+      throw new AppError("Email is not verified", status.UNAUTHORIZED);
+    }
+
+    await auth.api.resetPasswordEmailOTP({
+      body: {
+        email,
+        otp,
+        password,
+      },
+    });
+
+    await prisma.session.deleteMany({ where: { userId: isUserExists.id } });
+  } catch (error: any) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+
+    throw new AppError(
+      error.message || "Failed to reset password",
+      status.INTERNAL_SERVER_ERROR,
+    );
+  }
+};
+
 export const AuthService = {
   registerPatient,
   loginUser,
@@ -440,4 +529,6 @@ export const AuthService = {
   changePassword,
   logoutUser,
   verifyEmail,
+  forgetPassword,
+  resetPassword,
 };
