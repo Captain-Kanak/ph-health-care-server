@@ -188,14 +188,18 @@ const googleLoginSuccess = catchAsync(async (req: Request, res: Response) => {
     return res.redirect(`${env.FRONTEND_URL}/login?error=no_user_found`);
   }
 
-  tokenUtils.setAccessTokenCookie(res, accessToken as string);
-  tokenUtils.setRefreshTokenCookie(res, refreshToken as string);
+  if (!accessToken || !refreshToken) {
+    return res.redirect(`${env.FRONTEND_URL}/login?error=no_tokens_found`);
+  }
+
+  tokenUtils.setAccessTokenCookie(res, accessToken);
+  tokenUtils.setRefreshTokenCookie(res, refreshToken);
 
   const isValidRedirectPath =
     redirectPath.startsWith("/") && !redirectPath.startsWith("//");
   const finalRedirectPath = isValidRedirectPath ? redirectPath : "/dashboard";
 
-  return res.redirect(`${env.FRONTEND_URL}${finalRedirectPath}`);
+  return res.redirect(`${env.FRONTEND_URL}${finalRedirectPath}?auth=success`);
 });
 
 const googleLoginError = catchAsync(async (req: Request, res: Response) => {

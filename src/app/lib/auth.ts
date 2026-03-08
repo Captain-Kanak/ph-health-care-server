@@ -41,16 +41,16 @@ export const auth = betterAuth({
     cookies: {
       state: {
         attributes: {
-          secure: process.env.NODE_ENV === "production",
-          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+          secure: true,
+          sameSite: "none",
           httpOnly: true,
           path: "/",
         },
       },
       sessionToken: {
         attributes: {
-          secure: process.env.NODE_ENV === "production",
-          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+          secure: true,
+          sameSite: "none",
           httpOnly: true,
           path: "/",
         },
