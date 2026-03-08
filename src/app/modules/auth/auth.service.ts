@@ -324,13 +324,13 @@ const changePassword = async (
   sessionToken: string,
 ): Promise<Record<string, any>> => {
   try {
-    const authSession = await auth.api.getSession({
+    const session = await auth.api.getSession({
       headers: new Headers({
         Authorization: `Bearer ${sessionToken}`,
       }),
     });
 
-    if (!authSession) {
+    if (!session) {
       throw new AppError("Invalid session token", status.UNAUTHORIZED);
     }
 
@@ -352,6 +352,13 @@ const changePassword = async (
         "Failed to change password",
         status.INTERNAL_SERVER_ERROR,
       );
+    }
+
+    if (session.user.needPasswordChange) {
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { needPasswordChange: false },
+      });
     }
 
     const newAccessToken = tokenUtils.createAccessToken({
@@ -508,6 +515,13 @@ const resetPassword = async (email: string, otp: string, password: string) => {
       },
     });
 
+    if (isUserExists.needPasswordChange) {
+      await prisma.user.update({
+        where: { id: isUserExists.id },
+        data: { needPasswordChange: false },
+      });
+    }
+
     await prisma.session.deleteMany({ where: { userId: isUserExists.id } });
   } catch (error: any) {
     if (error instanceof AppError) {
@@ -516,6 +530,72 @@ const resetPassword = async (email: string, otp: string, password: string) => {
 
     throw new AppError(
       error.message || "Failed to reset password",
+      status.INTERNAL_SERVER_ERROR,
+    );
+  }
+};
+
+const googleLoginSuccess = async (sessionToken: string) => {
+  try {
+    const session = await auth.api.getSession({
+      headers: {
+        Cookie: `better-auth.session_token=${sessionToken}`,
+      },
+    });
+
+    if (!session || !session.user) {
+      return {
+        session: null,
+        user: null,
+        accessToken: null,
+        refreshToken: null,
+      };
+    }
+
+    await prisma.$transaction(async (trx) => {
+      const isPatientExists = await trx.patient.findUnique({
+        where: { userId: session.user.id },
+      });
+
+      if (!isPatientExists) {
+        await trx.patient.create({
+          data: {
+            userId: session.user.id,
+            name: session.user.name,
+            email: session.user.email,
+          },
+        });
+      }
+    });
+
+    const accessToken = tokenUtils.createAccessToken({
+      id: session.user.id,
+      name: session.user.name,
+      email: session.user.email,
+      emailVerified: session.user.emailVerified,
+      role: session.user.role,
+      status: session.user.status,
+      isDeleted: session.user.isDeleted,
+    });
+
+    const refreshToken = tokenUtils.createRefreshToken({
+      id: session.user.id,
+      name: session.user.name,
+      email: session.user.email,
+      emailVerified: session.user.emailVerified,
+      role: session.user.role,
+      status: session.user.status,
+      isDeleted: session.user.isDeleted,
+    });
+
+    return {
+      ...session,
+      accessToken,
+      refreshToken,
+    };
+  } catch (error: any) {
+    throw new AppError(
+      error.message || "Failed to google login",
       status.INTERNAL_SERVER_ERROR,
     );
   }
@@ -531,4 +611,5 @@ export const AuthService = {
   verifyEmail,
   forgetPassword,
   resetPassword,
+  googleLoginSuccess,
 };

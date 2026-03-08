@@ -6,6 +6,7 @@ import status from "http-status";
 import { tokenUtils } from "../../utils/token";
 import { User } from "@prisma/client";
 import { cookieUtils } from "../../utils/cookie";
+import { env } from "../../../config/env";
 
 const registerPatient = catchAsync(async (req: Request, res: Response) => {
   const payload = req.body;
@@ -157,6 +158,52 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const googleLogin = catchAsync(async (req: Request, res: Response) => {
+  const redirectPath = req.query.redirect || "/dashboard";
+  const encodedRedirectPath = encodeURIComponent(redirectPath as string);
+  const callbackURL = `${env.BETTER_AUTH_URL}/api/v1/auth/google/success?redirect=${encodedRedirectPath}`;
+
+  return res.render("googleRedirect", {
+    callbackURL,
+    betterAuthUrl: env.BETTER_AUTH_URL,
+  });
+});
+
+const googleLoginSuccess = catchAsync(async (req: Request, res: Response) => {
+  const redirectPath = (req.query.redirect as string) || "/dashboard";
+  const sessionToken = req.cookies["better-auth.session_token"];
+
+  if (!sessionToken) {
+    return res.redirect(`${env.FRONTEND_URL}/login?error=oauth_failed`);
+  }
+
+  const result = await AuthService.googleLoginSuccess(sessionToken);
+  const { session, user, accessToken, refreshToken } = result;
+
+  if (!session) {
+    return res.redirect(`${env.FRONTEND_URL}/login?error=no_session_found`);
+  }
+
+  if (!user) {
+    return res.redirect(`${env.FRONTEND_URL}/login?error=no_user_found`);
+  }
+
+  tokenUtils.setAccessTokenCookie(res, accessToken as string);
+  tokenUtils.setRefreshTokenCookie(res, refreshToken as string);
+
+  const isValidRedirectPath =
+    redirectPath.startsWith("/") && !redirectPath.startsWith("//");
+  const finalRedirectPath = isValidRedirectPath ? redirectPath : "/dashboard";
+
+  return res.redirect(`${env.FRONTEND_URL}${finalRedirectPath}`);
+});
+
+const googleLoginError = catchAsync(async (req: Request, res: Response) => {
+  const error = (req.query.error as string) || "oauth_failed";
+
+  return res.redirect(`${env.FRONTEND_URL}/login?error=${error}`);
+});
+
 export const AuthController = {
   registerPatient,
   loginUser,
@@ -167,4 +214,7 @@ export const AuthController = {
   verifyEmail,
   forgetPassword,
   resetPassword,
+  googleLogin,
+  googleLoginSuccess,
+  googleLoginError,
 };

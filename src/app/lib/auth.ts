@@ -8,23 +8,79 @@ import { bearer, emailOTP } from "better-auth/plugins";
 import { sendEmail } from "../utils/email";
 
 export const auth = betterAuth({
-  secret: env.BETTER_AUTH_SECRET,
   baseURL: env.BETTER_AUTH_URL,
-  trustedOrigins: [`${env.APP_URL}`],
+  secret: env.BETTER_AUTH_SECRET,
+  trustedOrigins: [`${env.FRONTEND_URL}`],
+  database: prismaAdapter(prisma, {
+    provider: "postgresql",
+  }),
   session: {
-    expiresIn: ms(env.BETTER_AUTH_SESSION_EXPIRES_IN as StringValue) / 1000,
-    updateAge: ms(env.BETTER_AUTH_SESSION_UPDATE_AGE as StringValue) / 1000,
+    expiresIn: Math.floor(
+      ms(env.BETTER_AUTH_SESSION_EXPIRES_IN as StringValue) / 1000,
+    ),
+    updateAge: Math.floor(
+      ms(env.BETTER_AUTH_SESSION_UPDATE_AGE as StringValue) / 1000,
+    ),
     cookieCache: {
       enabled: true,
-      maxAge: ms(env.BETTER_AUTH_SESSION_EXPIRES_IN as StringValue) / 1000,
+      maxAge: Math.floor(
+        ms(env.BETTER_AUTH_SESSION_EXPIRES_IN as StringValue) / 1000,
+      ),
     },
   },
+  // redirectURLs: {
+  //   signIn: ``,
+  // },
   advanced: {
     disableCSRFCheck: true,
+    cookiePrefix: "better-auth",
+    useSecureCookies: env.NODE_ENV === "production",
+    crossSubDomainCookies: {
+      enabled: false,
+    },
+    cookies: {
+      state: {
+        attributes: {
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+          httpOnly: true,
+          path: "/",
+        },
+      },
+      sessionToken: {
+        attributes: {
+          secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+          httpOnly: true,
+          path: "/",
+        },
+      },
+    },
   },
-  cookies: {
-    secure: env.NODE_ENV === "production",
-    sameSite: "lax",
+  emailAndPassword: {
+    enabled: true,
+    requireEmailVerification: true,
+  },
+  emailVerification: {
+    sendOnSignUp: true,
+    sendOnSignIn: true,
+    autoSignInAfterVerification: true,
+  },
+  socialProviders: {
+    google: {
+      clientId: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
+
+      mapProfileToUser: () => {
+        return {
+          role: UserRole.PATIENT,
+          status: UserStatus.ACTIVE,
+          needPasswordChange: false,
+          emailVerified: true,
+          isDeleted: false,
+        };
+      },
+    },
   },
   plugins: [
     bearer(),
@@ -79,19 +135,6 @@ export const auth = betterAuth({
       otpLength: 6,
     }),
   ],
-  database: prismaAdapter(prisma, {
-    provider: "postgresql",
-  }),
-  emailAndPassword: {
-    enabled: true,
-    requireEmailVerification: true,
-    autoSignIn: true,
-  },
-  emailVerification: {
-    sendOnSignUp: true,
-    sendOnSignIn: true,
-    autoSignInAfterVerification: true,
-  },
   user: {
     additionalFields: {
       role: {
