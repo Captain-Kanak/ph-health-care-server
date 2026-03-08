@@ -25,7 +25,7 @@ const authMiddleware =
       }
 
       if (sessionToken) {
-        const session = await prisma.session.findFirst({
+        const session = await prisma.session.findUnique({
           where: {
             token: sessionToken,
             expiresAt: {

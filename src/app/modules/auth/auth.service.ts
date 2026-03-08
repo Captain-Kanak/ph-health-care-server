@@ -4,7 +4,14 @@ import { prisma } from "../../lib/prisma";
 import { Patient, User, UserRole, UserStatus } from "@prisma/client";
 import status from "http-status";
 import { tokenUtils } from "../../utils/token";
-import { LoginUserPayload, RegisterPatientPayload } from "./auth.interface";
+import {
+  ChangePassword,
+  LoginUserPayload,
+  RegisterPatientPayload,
+} from "./auth.interface";
+import { jwtUtils } from "../../utils/jwt";
+import { env } from "../../../config/env";
+import ms, { StringValue } from "ms";
 
 const registerPatient = async (
   payload: RegisterPatientPayload,
@@ -16,7 +23,7 @@ const registerPatient = async (
   patient: Patient;
 }> => {
   try {
-    const { name, email, password, gender } = payload;
+    const { name, email, password } = payload;
 
     const isUserExist = await prisma.user.findUnique({ where: { email } });
 
@@ -37,7 +44,6 @@ const registerPatient = async (
         userId: data.user.id,
         name: data.user.name,
         email: data.user.email,
-        gender,
       },
     });
 
@@ -204,6 +210,7 @@ const getMe = async (user: User): Promise<User> => {
         admin: true,
         doctor: {
           include: {
+            _count: true,
             specialities: {
               include: {
                 speciality: true,
@@ -213,6 +220,7 @@ const getMe = async (user: User): Promise<User> => {
         },
         patient: {
           include: {
+            _count: true,
             patientHealthData: true,
             medicalReports: true,
             appointments: {
@@ -242,8 +250,405 @@ const getMe = async (user: User): Promise<User> => {
   }
 };
 
+const getNewTokens = async (
+  refreshToken: string,
+  sessionToken: string,
+): Promise<{ accessToken: string; refreshToken: string; token: string }> => {
+  try {
+    const isSessionTokenExists = await prisma.session.findUnique({
+      where: { token: sessionToken },
+      include: { user: true },
+    });
+
+    if (!isSessionTokenExists) {
+      throw new AppError("Invalid session token", status.UNAUTHORIZED);
+    }
+
+    const verifiedRefreshToken = jwtUtils.verifyToken(
+      refreshToken,
+      env.REFRESH_TOKEN_SECRET,
+    );
+
+    if (!verifiedRefreshToken) {
+      throw new AppError("Invalid refresh token", status.UNAUTHORIZED);
+    }
+
+    const newAccessToken = tokenUtils.createAccessToken({
+      id: verifiedRefreshToken.id,
+      name: verifiedRefreshToken.name,
+      email: verifiedRefreshToken.email,
+      emailVerified: verifiedRefreshToken.emailVerified,
+      role: verifiedRefreshToken.role,
+      status: verifiedRefreshToken.status,
+      isDeleted: verifiedRefreshToken.isDeleted,
+    });
+
+    const newRefreshToken = tokenUtils.createRefreshToken({
+      id: verifiedRefreshToken.id,
+      name: verifiedRefreshToken.name,
+      email: verifiedRefreshToken.email,
+      emailVerified: verifiedRefreshToken.emailVerified,
+      role: verifiedRefreshToken.role,
+      status: verifiedRefreshToken.status,
+      isDeleted: verifiedRefreshToken.isDeleted,
+    });
+
+    const updatedSession = await prisma.session.update({
+      where: { token: sessionToken },
+      data: {
+        expiresAt: new Date(
+          Date.now() + ms(env.BETTER_AUTH_SESSION_EXPIRES_IN as StringValue),
+        ),
+      },
+    });
+
+    return {
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+      token: updatedSession.token,
+    };
+  } catch (error: any) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+
+    throw new AppError(
+      error.message || "Failed to get new token",
+      status.INTERNAL_SERVER_ERROR,
+    );
+  }
+};
+
+const logoutUser = async (sessionToken: string) => {
+  try {
+    const result = await auth.api.signOut({
+      headers: new Headers({
+        Authorization: `Bearer ${sessionToken}`,
+      }),
+    });
+
+    if (!result.success) {
+      throw new AppError("Failed to logout user", status.INTERNAL_SERVER_ERROR);
+    }
+
+    return result;
+  } catch (error: any) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+
+    throw new AppError(
+      error.message || "Failed to logout user",
+      status.INTERNAL_SERVER_ERROR,
+    );
+  }
+};
+
+const verifyEmail = async (email: string, otp: string) => {
+  try {
+    const result = await auth.api.verifyEmailOTP({
+      body: {
+        email,
+        otp,
+      },
+    });
+
+    if (result.status && !result.user.emailVerified) {
+      await prisma.user.update({
+        where: {
+          email,
+        },
+        data: {
+          emailVerified: true,
+        },
+      });
+    }
+  } catch (error: any) {
+    throw new AppError(
+      error.message || "Failed to verify email",
+      status.INTERNAL_SERVER_ERROR,
+    );
+  }
+};
+
+const changePassword = async (
+  payload: ChangePassword,
+  sessionToken: string,
+): Promise<Record<string, any>> => {
+  try {
+    const session = await auth.api.getSession({
+      headers: new Headers({
+        Authorization: `Bearer ${sessionToken}`,
+      }),
+    });
+
+    if (!session) {
+      throw new AppError("Invalid session token", status.UNAUTHORIZED);
+    }
+
+    const userAccount = await prisma.account.findFirst({
+      where: {
+        userId: session.user.id,
+      },
+    });
+
+    if (userAccount?.providerId === "google") {
+      throw new AppError(
+        "Google account cannot change password",
+        status.BAD_REQUEST,
+      );
+    }
+
+    const { oldPassword, newPassword } = payload;
+
+    const result = await auth.api.changePassword({
+      body: {
+        currentPassword: oldPassword,
+        newPassword,
+        revokeOtherSessions: true,
+      },
+      headers: new Headers({
+        Authorization: `Bearer ${sessionToken}`,
+      }),
+    });
+
+    if (!result) {
+      throw new AppError(
+        "Failed to change password",
+        status.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    if (session.user.needPasswordChange) {
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { needPasswordChange: false },
+      });
+    }
+
+    const newAccessToken = tokenUtils.createAccessToken({
+      id: result.user.id,
+      name: result.user.name,
+      email: result.user.email,
+      emailVerified: result.user.emailVerified,
+      role: result.user.role,
+      status: result.user.status,
+      isDeleted: result.user.isDeleted,
+    });
+
+    const newRefreshToken = tokenUtils.createRefreshToken({
+      id: result.user.id,
+      name: result.user.name,
+      email: result.user.email,
+      emailVerified: result.user.emailVerified,
+      role: result.user.role,
+      status: result.user.status,
+      isDeleted: result.user.isDeleted,
+    });
+
+    return {
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+      ...result,
+    };
+  } catch (error: any) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+
+    throw new AppError(
+      error.message || "Failed to change password",
+      status.INTERNAL_SERVER_ERROR,
+    );
+  }
+};
+
+const forgetPassword = async (email: string) => {
+  try {
+    const isUserExists = await prisma.user.findUnique({ where: { email } });
+
+    if (!isUserExists) {
+      throw new AppError("User not found", status.NOT_FOUND);
+    }
+
+    if (isUserExists.isDeleted || isUserExists.status === UserStatus.DELETED) {
+      throw new AppError("User is deleted", status.NOT_FOUND);
+    }
+
+    if (isUserExists.status === UserStatus.BLOCKED) {
+      throw new AppError("User is blocked", status.FORBIDDEN);
+    }
+
+    if (!isUserExists.emailVerified) {
+      throw new AppError("Email is not verified", status.UNAUTHORIZED);
+    }
+
+    const userAccount = await prisma.account.findFirst({
+      where: {
+        userId: isUserExists.id,
+      },
+    });
+
+    if (userAccount?.providerId === "google") {
+      throw new AppError(
+        "Google account cannot change password",
+        status.BAD_REQUEST,
+      );
+    }
+
+    await auth.api.requestPasswordResetEmailOTP({
+      body: {
+        email,
+      },
+    });
+  } catch (error: any) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+
+    throw new AppError(
+      error.message || "Failed to forget password",
+      status.INTERNAL_SERVER_ERROR,
+    );
+  }
+};
+
+const resetPassword = async (email: string, otp: string, password: string) => {
+  try {
+    const isUserExists = await prisma.user.findUnique({ where: { email } });
+
+    if (!isUserExists) {
+      throw new AppError("User not found", status.NOT_FOUND);
+    }
+
+    if (isUserExists.isDeleted || isUserExists.status === UserStatus.DELETED) {
+      throw new AppError("User is deleted", status.NOT_FOUND);
+    }
+
+    if (isUserExists.status === UserStatus.BLOCKED) {
+      throw new AppError("User is blocked", status.FORBIDDEN);
+    }
+
+    if (!isUserExists.emailVerified) {
+      throw new AppError("Email is not verified", status.UNAUTHORIZED);
+    }
+
+    const userAccount = await prisma.account.findFirst({
+      where: {
+        userId: isUserExists.id,
+      },
+    });
+
+    if (userAccount?.providerId === "google") {
+      throw new AppError(
+        "Google account cannot change password",
+        status.BAD_REQUEST,
+      );
+    }
+
+    await auth.api.resetPasswordEmailOTP({
+      body: {
+        email,
+        otp,
+        password,
+      },
+    });
+
+    if (isUserExists.needPasswordChange) {
+      await prisma.user.update({
+        where: { id: isUserExists.id },
+        data: { needPasswordChange: false },
+      });
+    }
+
+    await prisma.session.deleteMany({ where: { userId: isUserExists.id } });
+  } catch (error: any) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+
+    throw new AppError(
+      error.message || "Failed to reset password",
+      status.INTERNAL_SERVER_ERROR,
+    );
+  }
+};
+
+const googleLoginSuccess = async (sessionToken: string) => {
+  try {
+    const session = await auth.api.getSession({
+      headers: {
+        Cookie: `better-auth.session_token=${sessionToken}`,
+      },
+    });
+
+    if (!session || !session.user) {
+      return {
+        session: null,
+        user: null,
+        accessToken: null,
+        refreshToken: null,
+      };
+    }
+
+    await prisma.$transaction(async (trx) => {
+      const isPatientExists = await trx.patient.findUnique({
+        where: { userId: session.user.id },
+      });
+
+      if (!isPatientExists) {
+        await trx.patient.create({
+          data: {
+            userId: session.user.id,
+            name: session.user.name,
+            email: session.user.email,
+          },
+        });
+      }
+    });
+
+    const accessToken = tokenUtils.createAccessToken({
+      id: session.user.id,
+      name: session.user.name,
+      email: session.user.email,
+      emailVerified: session.user.emailVerified,
+      role: session.user.role,
+      status: session.user.status,
+      isDeleted: session.user.isDeleted,
+    });
+
+    const refreshToken = tokenUtils.createRefreshToken({
+      id: session.user.id,
+      name: session.user.name,
+      email: session.user.email,
+      emailVerified: session.user.emailVerified,
+      role: session.user.role,
+      status: session.user.status,
+      isDeleted: session.user.isDeleted,
+    });
+
+    return {
+      ...session,
+      accessToken,
+      refreshToken,
+    };
+  } catch (error: any) {
+    throw new AppError(
+      error.message || "Failed to google login",
+      status.INTERNAL_SERVER_ERROR,
+    );
+  }
+};
+
 export const AuthService = {
   registerPatient,
   loginUser,
   getMe,
+  getNewTokens,
+  logoutUser,
+  verifyEmail,
+  changePassword,
+  forgetPassword,
+  resetPassword,
+  googleLoginSuccess,
 };

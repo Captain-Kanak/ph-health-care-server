@@ -6,7 +6,7 @@ model Patient {
     image     String? @db.Text
     phone     String? @db.VarChar(20)
     address   String? @db.Text
-    gender    Gender
+    gender    Gender?
     isDeleted Boolean @default(false)
 
     deletedAt DateTime?
