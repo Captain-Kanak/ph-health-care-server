@@ -10,7 +10,12 @@ import { sendEmail } from "../utils/email";
 export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_URL,
   secret: env.BETTER_AUTH_SECRET,
-  trustedOrigins: [`${env.FRONTEND_URL}`],
+  trustedOrigins: [
+    "http://localhost:3000",
+    "http://localhost:5000",
+    env.FRONTEND_URL,
+    env.BETTER_AUTH_URL,
+  ],
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
@@ -28,9 +33,9 @@ export const auth = betterAuth({
       ),
     },
   },
-  // redirectURLs: {
-  //   signIn: ``,
-  // },
+  redirectURLs: {
+    signIn: `${env.BETTER_AUTH_URL}/api/v1/auth/google/success`,
+  },
   advanced: {
     disableCSRFCheck: true,
     cookiePrefix: "better-auth",

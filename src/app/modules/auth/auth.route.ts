@@ -22,20 +22,21 @@ router.get("/me", authMiddleware(), AuthController.getMe);
 
 router.post("/refresh-tokens", authMiddleware(), AuthController.getNewTokens);
 
+router.post("/logout", authMiddleware(), AuthController.logoutUser);
+
+router.post("/verify-email", AuthController.verifyEmail);
+
 router.post(
   "/change-password",
   authMiddleware(),
   AuthController.changePassword,
 );
 
-router.post("/logout", authMiddleware(), AuthController.logoutUser);
-
-router.post("/verify-email", AuthController.verifyEmail);
-
 router.post("/forget-password", AuthController.forgetPassword);
 
 router.post("/reset-password", AuthController.resetPassword);
 
+// http://localhost:5000/api/v1/auth/login/google?redirect=/profile
 router.get("/login/google", AuthController.googleLogin);
 
 router.get("/google/success", AuthController.googleLoginSuccess);

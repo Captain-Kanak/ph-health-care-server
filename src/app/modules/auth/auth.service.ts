@@ -319,6 +319,58 @@ const getNewTokens = async (
   }
 };
 
+const logoutUser = async (sessionToken: string) => {
+  try {
+    const result = await auth.api.signOut({
+      headers: new Headers({
+        Authorization: `Bearer ${sessionToken}`,
+      }),
+    });
+
+    if (!result.success) {
+      throw new AppError("Failed to logout user", status.INTERNAL_SERVER_ERROR);
+    }
+
+    return result;
+  } catch (error: any) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+
+    throw new AppError(
+      error.message || "Failed to logout user",
+      status.INTERNAL_SERVER_ERROR,
+    );
+  }
+};
+
+const verifyEmail = async (email: string, otp: string) => {
+  try {
+    const result = await auth.api.verifyEmailOTP({
+      body: {
+        email,
+        otp,
+      },
+    });
+
+    if (result.status && !result.user.emailVerified) {
+      await prisma.user.update({
+        where: {
+          email,
+        },
+        data: {
+          emailVerified: true,
+        },
+      });
+    }
+  } catch (error: any) {
+    throw new AppError(
+      error.message || "Failed to verify email",
+      status.INTERNAL_SERVER_ERROR,
+    );
+  }
+};
+
 const changePassword = async (
   payload: ChangePassword,
   sessionToken: string,
@@ -332,6 +384,19 @@ const changePassword = async (
 
     if (!session) {
       throw new AppError("Invalid session token", status.UNAUTHORIZED);
+    }
+
+    const userAccount = await prisma.account.findFirst({
+      where: {
+        userId: session.user.id,
+      },
+    });
+
+    if (userAccount?.providerId === "google") {
+      throw new AppError(
+        "Google account cannot change password",
+        status.BAD_REQUEST,
+      );
     }
 
     const { oldPassword, newPassword } = payload;
@@ -398,58 +463,6 @@ const changePassword = async (
   }
 };
 
-const logoutUser = async (sessionToken: string) => {
-  try {
-    const result = await auth.api.signOut({
-      headers: new Headers({
-        Authorization: `Bearer ${sessionToken}`,
-      }),
-    });
-
-    if (!result.success) {
-      throw new AppError("Failed to logout user", status.INTERNAL_SERVER_ERROR);
-    }
-
-    return result;
-  } catch (error: any) {
-    if (error instanceof AppError) {
-      throw error;
-    }
-
-    throw new AppError(
-      error.message || "Failed to logout user",
-      status.INTERNAL_SERVER_ERROR,
-    );
-  }
-};
-
-const verifyEmail = async (email: string, otp: string) => {
-  try {
-    const result = await auth.api.verifyEmailOTP({
-      body: {
-        email,
-        otp,
-      },
-    });
-
-    if (result.status && !result.user.emailVerified) {
-      await prisma.user.update({
-        where: {
-          email,
-        },
-        data: {
-          emailVerified: true,
-        },
-      });
-    }
-  } catch (error: any) {
-    throw new AppError(
-      error.message || "Failed to verify email",
-      status.INTERNAL_SERVER_ERROR,
-    );
-  }
-};
-
 const forgetPassword = async (email: string) => {
   try {
     const isUserExists = await prisma.user.findUnique({ where: { email } });
@@ -468,6 +481,19 @@ const forgetPassword = async (email: string) => {
 
     if (!isUserExists.emailVerified) {
       throw new AppError("Email is not verified", status.UNAUTHORIZED);
+    }
+
+    const userAccount = await prisma.account.findFirst({
+      where: {
+        userId: isUserExists.id,
+      },
+    });
+
+    if (userAccount?.providerId === "google") {
+      throw new AppError(
+        "Google account cannot change password",
+        status.BAD_REQUEST,
+      );
     }
 
     await auth.api.requestPasswordResetEmailOTP({
@@ -505,6 +531,19 @@ const resetPassword = async (email: string, otp: string, password: string) => {
 
     if (!isUserExists.emailVerified) {
       throw new AppError("Email is not verified", status.UNAUTHORIZED);
+    }
+
+    const userAccount = await prisma.account.findFirst({
+      where: {
+        userId: isUserExists.id,
+      },
+    });
+
+    if (userAccount?.providerId === "google") {
+      throw new AppError(
+        "Google account cannot change password",
+        status.BAD_REQUEST,
+      );
     }
 
     await auth.api.resetPasswordEmailOTP({
@@ -606,9 +645,9 @@ export const AuthService = {
   loginUser,
   getMe,
   getNewTokens,
-  changePassword,
   logoutUser,
   verifyEmail,
+  changePassword,
   forgetPassword,
   resetPassword,
   googleLoginSuccess,
