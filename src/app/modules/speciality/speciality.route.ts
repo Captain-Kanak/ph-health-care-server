@@ -8,12 +8,14 @@ import {
 } from "../../middleware/zod-middleware";
 import { ParamsIdZodSchema } from "../../validation/params.validation";
 import { SpecialityValidation } from "./speciality.validation";
+import { multerUpload } from "../../../config/multer.config";
 
 const router: Router = Router();
 
 router.post(
   "/",
   authMiddleware(UserRole.SUPER_ADMIN, UserRole.ADMIN),
+  multerUpload.single("file"),
   validateRequestBody(SpecialityValidation.CreateSpecialityZodSchema),
   SpecialityController.createSpeciality,
 );
