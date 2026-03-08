@@ -1,7 +1,7 @@
 import app from "./app";
 import { env } from "./config/env";
 
-const port = env.PORT;
+const port = Number(env.PORT);
 
 const startServer = async () => {
   try {
