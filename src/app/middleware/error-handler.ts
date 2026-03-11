@@ -5,8 +5,9 @@ import status from "http-status";
 import * as z from "zod";
 import { ErrorSourceType } from "../../interfaces/error.interface";
 import { handleZodError } from "../errors/ZodError";
+import { deleteFromCloudinary } from "../../config/cloudinary.config";
 
-function globalErrorHandler(
+async function globalErrorHandler(
   err: Error,
   req: Request,
   res: Response,
@@ -14,6 +15,16 @@ function globalErrorHandler(
 ) {
   if (env.NODE_ENV === "development") {
     console.error(err);
+  }
+
+  if (req.file) {
+    await deleteFromCloudinary(req.file.path);
+  }
+
+  if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+    const imageUrls = req.files.map((file) => file.path);
+
+    await Promise.all(imageUrls.map((url) => deleteFromCloudinary(url)));
   }
 
   let statusCode: number = status.INTERNAL_SERVER_ERROR;
