@@ -533,7 +533,7 @@ class QueryBuilder<
         case "gt":
         case "gte":
         case "not":
-          rangeQuery.not = parsedValue;
+          rangeQuery[operator] = parsedValue;
           break;
 
         case "in":

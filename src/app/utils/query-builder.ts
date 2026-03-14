@@ -4,6 +4,7 @@ import {
   PrismaCountArgs,
   PrismaFindManyArgs,
   PrismaModelDelegate,
+  PrismaNumberFilter,
   PrismaSearchString,
   PrismaWhereConditions,
   QueryResult,
@@ -134,17 +135,12 @@ export class QueryBuilder<T, TWhereInput, TInclude> {
       }
     });
 
-    // const queryWhere = this.query.where as PrismaWhereConditions;
-    // const countQueryWhere = this.countQuery.where as PrismaWhereConditions;
-
     Object.keys(filterParams).forEach((field) => {
       const value = filterParams[field];
 
       if (value === "" || value === undefined || value === null) {
         return;
       }
-
-      //   console.log("1", field);
 
       const isAllowedField =
         !filterableFields ||
@@ -155,10 +151,31 @@ export class QueryBuilder<T, TWhereInput, TInclude> {
         return;
       }
 
-      //   console.log("2", field);
+      if (
+        typeof value === "object" &&
+        value !== null &&
+        !Array.isArray(value)
+      ) {
+        this.query.where = {
+          ...this.query.where,
+          [field]: this._parseFilterValueRange(
+            value as Record<string, string | number>,
+          ),
+        };
 
-      if (field.includes(".")) {
+        this.countQuery.where = {
+          ...this.countQuery.where,
+          [field]: this._parseFilterValueRange(
+            value as Record<string, string | number>,
+          ),
+        };
+
+        return;
       }
+
+      //   if (field.includes(".")) {
+      //     return;
+      //   }
 
       this.query.where = {
         ...this.query.where,
@@ -285,5 +302,34 @@ export class QueryBuilder<T, TWhereInput, TInclude> {
     }
 
     return value;
+  }
+
+  private _parseFilterValueRange(
+    value: Record<string, string | number>,
+  ): PrismaNumberFilter | PrismaSearchString {
+    const rangeQuery: Record<string, unknown> = {};
+
+    Object.keys(value).forEach((operator) => {
+      const operatorValue = value[operator];
+
+      const parsedValue: number | string =
+        typeof operatorValue === "string" && !isNaN(Number(operatorValue))
+          ? Number(operatorValue)
+          : operatorValue;
+
+      switch (operator) {
+        case "lt":
+        case "lte":
+        case "gt":
+        case "gte":
+          rangeQuery[operator] = parsedValue;
+          break;
+
+        default:
+          break;
+      }
+    });
+
+    return Object.keys(rangeQuery).length > 0 ? rangeQuery : value;
   }
 }

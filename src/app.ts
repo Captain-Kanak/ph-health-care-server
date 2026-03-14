@@ -15,6 +15,8 @@ const app: Application = express();
 app.set("view engine", "ejs");
 app.set("views", path.resolve(process.cwd(), "src/app/templates"));
 
+app.set("query parser", "extended");
+
 app.use(
   cors({
     origin: [
