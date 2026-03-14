@@ -1,3 +1,7 @@
 export interface MetaData {
-  total: number;
+  currentPage: number;
+  limit: number;
+  skip: number;
+  totalPages: number;
+  [key: string]: number;
 }

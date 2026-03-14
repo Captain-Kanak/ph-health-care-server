@@ -22,7 +22,9 @@ const createSpeciality = async (
 
 const getSpecialities = async (): Promise<{
   specialities: Speciality[];
-  meta: MetaData;
+  meta: {
+    totalData: number;
+  };
 }> => {
   try {
     const specialities = await prisma.speciality.findMany({
@@ -36,7 +38,7 @@ const getSpecialities = async (): Promise<{
     return {
       specialities,
       meta: {
-        total: totalSpecialities,
+        totalData: totalSpecialities,
       },
     };
   } catch (error: any) {

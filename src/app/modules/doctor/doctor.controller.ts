@@ -3,18 +3,21 @@ import { catchAsync } from "../../shared/catchAsync";
 import { DoctorService } from "./doctor.service";
 import { sendResponse } from "../../shared/sendResponse";
 import status from "http-status";
-import { DecodedUser } from "../../../types/auth.type";
+import { User } from "@prisma/client";
+import { IQueryParams } from "../../../interfaces/query.interface";
 
 const getAllDoctors = catchAsync(async (req: Request, res: Response) => {
-  const result = await DoctorService.getAllDoctors();
+  const query = req.query;
+
+  const result = await DoctorService.getAllDoctors(query as IQueryParams);
 
   sendResponse(res, {
     statusCode: status.OK,
     success: true,
-    message: result.length
-      ? "Doctors fetched successfully"
-      : "No doctors found",
-    data: result,
+    message: "Doctors fetched successfully",
+    data: {
+      ...result,
+    },
   });
 });
 
@@ -39,7 +42,7 @@ const updateDoctorById = catchAsync(async (req: Request, res: Response) => {
   const result = await DoctorService.updateDoctorById(
     id as string,
     payload,
-    user as DecodedUser,
+    user as User,
   );
 
   sendResponse(res, {
@@ -56,7 +59,7 @@ const deleteDoctorById = catchAsync(async (req: Request, res: Response) => {
 
   const result = await DoctorService.deleteDoctorById(
     id as string,
-    user as DecodedUser,
+    user as User,
   );
 
   sendResponse(res, {

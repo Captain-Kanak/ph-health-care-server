@@ -2,24 +2,76 @@ import status from "http-status";
 import AppError from "../../errors/AppError";
 import { prisma } from "../../lib/prisma";
 import { UpdateDoctor } from "./doctor.interface";
-import { Doctor, User, UserRole } from "@prisma/client";
+import { Doctor, Gender, Prisma, User, UserRole } from "@prisma/client";
+import { IQueryParams } from "../../../interfaces/query.interface";
+import {
+  doctorFilterableFields,
+  doctorIncludeConfig,
+  doctorSearchableFields,
+} from "./doctor.constant";
+import { QueryBuilder } from "../../utils/query-builder";
 
-const getAllDoctors = async (): Promise<Doctor[]> => {
+const getAllDoctors = async (query: IQueryParams) => {
   try {
-    const doctors = await prisma.doctor.findMany({
+    // const queryBuilder = new QueryBuilder<
+    //   Doctor,
+    //   Prisma.DoctorWhereInput,
+    //   Prisma.DoctorInclude
+    // >(prisma.doctor, query, {
+    //   searchableFields: doctorSearchableFields,
+    //   filterableFields: doctorFilterableFields,
+    // });
+
+    // const result = await queryBuilder
+    //   .search()
+    //   .filter()
+    //   .where({
+    //     isDeleted: false,
+    //   })
+    //   .includes({
+    //     user: true,
+    //     specialities: true,
+    //   })
+    //   .dynamicIncludes(doctorIncludeConfig)
+    //   .paginate()
+    //   .sort()
+    //   .fields()
+    //   .execute();
+
+    await prisma.doctor.findMany({
+      skip: 0,
+      take: 10,
       where: {
         isDeleted: false,
       },
-      include: {
-        specialities: {
-          include: {
-            speciality: true,
-          },
+      orderBy: {
+        user: {
+          createdAt: "desc",
         },
       },
     });
 
-    return doctors;
+    const queryBuilder = new QueryBuilder<
+      Doctor,
+      Prisma.DoctorWhereInput,
+      Prisma.DoctorInclude
+    >(prisma.doctor, query, {
+      searchableFields: doctorSearchableFields,
+      filterableFields: doctorFilterableFields,
+    });
+
+    const result = await queryBuilder
+      .paginate()
+      .where({
+        isDeleted: false,
+      })
+      .sort()
+      .execute();
+
+    return {
+      doctors: result.data,
+      meta: result.meta,
+    };
   } catch (error: any) {
     throw new AppError(
       error.message || "Failed to fetch doctors",

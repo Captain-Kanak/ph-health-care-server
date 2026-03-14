@@ -16,7 +16,7 @@ router.post(
 
 router.post(
   "/create-doctor",
-  authMiddleware(UserRole.SUPER_ADMIN, UserRole.ADMIN),
+  // authMiddleware(UserRole.SUPER_ADMIN, UserRole.ADMIN),
   validateRequestBody(UserValidation.CreateDoctorZodSchema),
   UserController.createDoctor,
 );

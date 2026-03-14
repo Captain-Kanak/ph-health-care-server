@@ -11,6 +11,6 @@
     "forceConsistentCasingInFileNames": true,
     "ignoreDeprecations": "5.0"
   },
-  "include": ["src/**/*.ts", "prisma.config.ts"],
+  "include": ["src/**/*.ts", "prisma.config.ts", "data/qb.ts"],
   "exclude": ["node_modules", "dist"]
 }
