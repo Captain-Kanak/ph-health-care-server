@@ -2,7 +2,7 @@ import status from "http-status";
 import AppError from "../../errors/AppError";
 import { prisma } from "../../lib/prisma";
 import { UpdateDoctor } from "./doctor.interface";
-import { Doctor, Gender, Prisma, User, UserRole } from "@prisma/client";
+import { Doctor, Prisma, User, UserRole } from "@prisma/client";
 import { IQueryParams } from "../../../interfaces/query-builder.interface";
 import {
   doctorFilterableFields,
@@ -38,11 +38,14 @@ const getAllDoctors = async (query: IQueryParams) => {
     //   .fields()
     //   .execute();
 
-    const doc = await prisma.doctor.findMany({
+    await prisma.doctor.findMany({
       skip: 0,
       take: 10,
       where: {
         isDeleted: false,
+        // gender: {
+        //   in: ["MALE", "FEMALE"],
+        // },
         OR: [
           {
             name: {
@@ -103,6 +106,7 @@ const getAllDoctors = async (query: IQueryParams) => {
         isDeleted: false,
       })
       .search()
+      .filter()
       .sort()
       .execute();
 

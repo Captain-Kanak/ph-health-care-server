@@ -12,17 +12,15 @@ export const doctorSearchableFields = [
 ];
 
 export const doctorFilterableFields = [
-  "grender",
-  "isDeleted",
   "appointmentFee",
-  "experience",
-  "registrationNumber",
-  "specialities.specialityId",
-  "currentWorkingPlace",
-  "designation",
-  "qualification",
-  "specialities.speciality.title",
-  "user.role",
+  "gender",
+  // "experience",
+  // "registrationNumber",
+  // "specialities.specialityId",
+  // "currentWorkingPlace",
+  // "designation",
+  // "qualification",
+  // "specialities.speciality.title",
 ];
 
 export const doctorIncludeConfig: Partial<

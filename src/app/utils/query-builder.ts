@@ -5,8 +5,11 @@ import {
   PrismaFindManyArgs,
   PrismaModelDelegate,
   PrismaSearchString,
+  PrismaWhereConditions,
   QueryResult,
 } from "../../interfaces/query-builder.interface";
+
+// Cardiologists, Oncologists, Nephrologists, Neurologists
 
 export class QueryBuilder<T, TWhereInput, TInclude> {
   private query: PrismaFindManyArgs;
@@ -101,9 +104,11 @@ export class QueryBuilder<T, TWhereInput, TInclude> {
       );
 
       this.query.where = {
+        ...this.query.where,
         OR: searchConditions,
       };
       this.countQuery.where = {
+        ...this.countQuery.where,
         OR: searchConditions,
       };
     }
@@ -112,6 +117,60 @@ export class QueryBuilder<T, TWhereInput, TInclude> {
   }
 
   filter(): this {
+    const { filterableFields } = this.config;
+    const excludedFields = [
+      "page",
+      "limit",
+      "searchTerm",
+      "sortBy",
+      "sortOrder",
+    ];
+
+    const filterParams: Record<string, unknown> = {};
+
+    Object.keys(this.queryParams).forEach((key) => {
+      if (!excludedFields.includes(key)) {
+        filterParams[key] = this.queryParams[key];
+      }
+    });
+
+    // const queryWhere = this.query.where as PrismaWhereConditions;
+    // const countQueryWhere = this.countQuery.where as PrismaWhereConditions;
+
+    Object.keys(filterParams).forEach((field) => {
+      const value = filterParams[field];
+
+      if (value === "" || value === undefined || value === null) {
+        return;
+      }
+
+      //   console.log("1", field);
+
+      const isAllowedField =
+        !filterableFields ||
+        filterableFields.length === 0 ||
+        filterableFields.includes(field);
+
+      if (!isAllowedField) {
+        return;
+      }
+
+      //   console.log("2", field);
+
+      if (field.includes(".")) {
+      }
+
+      this.query.where = {
+        ...this.query.where,
+        [field]: this._parseFilterValue(value),
+      };
+
+      this.countQuery.where = {
+        ...this.countQuery.where,
+        [field]: this._parseFilterValue(value),
+      };
+    });
+
     return this;
   }
 
@@ -204,5 +263,27 @@ export class QueryBuilder<T, TWhereInput, TInclude> {
     }
 
     return result;
+  }
+
+  private _parseFilterValue(value: unknown): unknown {
+    if (value === "true") {
+      return true;
+    }
+
+    if (value === "false") {
+      return false;
+    }
+
+    if (typeof value === "string" && !isNaN(Number(value)) && value !== "") {
+      return Number(value);
+    }
+
+    if (Array.isArray(value)) {
+      return {
+        in: value.map((item) => this._parseFilterValue(item)),
+      };
+    }
+
+    return value;
   }
 }

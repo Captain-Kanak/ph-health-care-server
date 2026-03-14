@@ -12,7 +12,7 @@ import {
   QueryResult,
 } from "../../interfaces/query-builder.interface";
 
-export class QueryBuilder<
+class QueryBuilder<
   T,
   TWhere = Record<string, unknown>,
   TInclude = Record<string, unknown>,
