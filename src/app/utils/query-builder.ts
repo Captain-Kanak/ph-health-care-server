@@ -3,8 +3,8 @@ interface PrismaFindManyArgs {
   take?: number;
   where?: PrismaWhereConditions;
   orderBy?: Record<string, "asc" | "desc" | unknown>;
-  include?: Record<string, boolean | unknown>;
   select?: Record<string, boolean | unknown>;
+  include?: Record<string, boolean | unknown>;
   cursor?: Record<string, unknown>;
   distinct?: string | string[];
   [key: string]: unknown;
@@ -36,9 +36,22 @@ interface IQueryParams {
   [key: string]: string | undefined;
 }
 
-interface IQueryConfig {}
+interface IQueryConfig {
+  searchableFields?: string[];
+  filterableFields?: string[];
+}
 
-interface IQueryResult<T> {
+interface PrismaSearchString {
+  contains?: string;
+  mode?: "insensitive" | "default";
+  startsWith?: string;
+  endsWith?: string;
+  not?: string | PrismaSearchString;
+  in?: string[];
+  notIn?: string[];
+}
+
+interface QueryResult<T> {
   data: T[];
   meta: {
     currentPage: number;
@@ -54,6 +67,7 @@ export class QueryBuilder<T, TWhereInput, TInclude> {
   private page: number;
   private limit: number;
   private skip: number;
+  private searchTerm: string;
   private sortBy: string;
   private sortOrder: "asc" | "desc";
 
@@ -65,6 +79,7 @@ export class QueryBuilder<T, TWhereInput, TInclude> {
     this.page = Number(this.queryParams.page) || 1;
     this.limit = Number(this.queryParams.limit) || 10;
     this.skip = (this.page - 1) * this.limit;
+    this.searchTerm = this.queryParams.searchTerm || "";
     this.sortBy = this.queryParams.sortBy || "createdAt";
     this.sortOrder = this.queryParams.sortOrder || "desc";
     this.query = {};
@@ -92,6 +107,41 @@ export class QueryBuilder<T, TWhereInput, TInclude> {
       conditions as Record<string, unknown>,
     );
 
+    return this;
+  }
+
+  search(): this {
+    const { searchableFields } = this.config;
+
+    if (this.searchTerm && searchableFields && searchableFields.length > 0) {
+      const searchString: PrismaSearchString = {
+        contains: this.searchTerm,
+        mode: "insensitive",
+      };
+
+      const searchConditions: Record<string, unknown>[] = searchableFields.map(
+        (fields) => {
+          if (fields.includes(".")) {
+          }
+
+          return {
+            [fields]: searchString,
+          };
+        },
+      );
+
+      this.query.where = {
+        OR: searchConditions,
+      };
+      this.countQuery.where = {
+        OR: searchConditions,
+      };
+    }
+
+    return this;
+  }
+
+  filter(): this {
     return this;
   }
 
@@ -133,10 +183,14 @@ export class QueryBuilder<T, TWhereInput, TInclude> {
     return this;
   }
 
-  async execute(): Promise<IQueryResult<T>> {
+  async execute(): Promise<QueryResult<T>> {
     const [data, total] = await Promise.all([
-      this.model.findMany(this.query),
-      this.model.count(this.countQuery),
+      this.model.findMany(
+        this.query as Parameters<typeof this.model.findMany>[0],
+      ),
+      this.model.count(
+        this.countQuery as Parameters<typeof this.model.count>[0],
+      ),
     ]);
 
     const totalPages = Math.ceil(total / this.limit);

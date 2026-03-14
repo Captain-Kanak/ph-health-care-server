@@ -65,6 +65,7 @@ const getAllDoctors = async (query: IQueryParams) => {
       .where({
         isDeleted: false,
       })
+      .search()
       .sort()
       .execute();
 

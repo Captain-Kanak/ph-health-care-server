@@ -44,8 +44,8 @@ export interface IQueryConfig {
 }
 
 export interface PrismaStringFilter {
-  mode?: "insensitive" | "default";
   contains?: string;
+  mode?: "insensitive" | "default";
   startsWith?: string;
   endsWith?: string;
   not?: string | PrismaStringFilter;
