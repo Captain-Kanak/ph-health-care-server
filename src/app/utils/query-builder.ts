@@ -1,65 +1,12 @@
-interface PrismaFindManyArgs {
-  skip?: number;
-  take?: number;
-  where?: PrismaWhereConditions;
-  orderBy?: Record<string, "asc" | "desc" | unknown>;
-  select?: Record<string, boolean | unknown>;
-  include?: Record<string, boolean | unknown>;
-  cursor?: Record<string, unknown>;
-  distinct?: string | string[];
-  [key: string]: unknown;
-}
-
-interface PrismaCountArgs {
-  where?: PrismaWhereConditions;
-  [key: string]: unknown;
-}
-
-interface PrismaWhereConditions {
-  OR?: Record<string, unknown>[];
-  AND?: Record<string, unknown>[];
-  NOT?: Record<string, unknown>[];
-  [key: string]: unknown;
-}
-
-interface PrismaModelDelegate {
-  findMany(args?: any): Promise<any[]>;
-  count(args?: any): Promise<number>;
-}
-
-interface IQueryParams {
-  page?: string;
-  limit?: string;
-  sortBy?: string;
-  sortOrder?: "asc" | "desc";
-  searchTerm?: string;
-  [key: string]: string | undefined;
-}
-
-interface IQueryConfig {
-  searchableFields?: string[];
-  filterableFields?: string[];
-}
-
-interface PrismaSearchString {
-  contains?: string;
-  mode?: "insensitive" | "default";
-  startsWith?: string;
-  endsWith?: string;
-  not?: string | PrismaSearchString;
-  in?: string[];
-  notIn?: string[];
-}
-
-interface QueryResult<T> {
-  data: T[];
-  meta: {
-    currentPage: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
+import {
+  IQueryConfig,
+  IQueryParams,
+  PrismaCountArgs,
+  PrismaFindManyArgs,
+  PrismaModelDelegate,
+  PrismaSearchString,
+  QueryResult,
+} from "../../interfaces/query-builder.interface";
 
 export class QueryBuilder<T, TWhereInput, TInclude> {
   private query: PrismaFindManyArgs;

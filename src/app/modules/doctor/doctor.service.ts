@@ -3,7 +3,7 @@ import AppError from "../../errors/AppError";
 import { prisma } from "../../lib/prisma";
 import { UpdateDoctor } from "./doctor.interface";
 import { Doctor, Gender, Prisma, User, UserRole } from "@prisma/client";
-import { IQueryParams } from "../../../interfaces/query.interface";
+import { IQueryParams } from "../../../interfaces/query-builder.interface";
 import {
   doctorFilterableFields,
   doctorIncludeConfig,

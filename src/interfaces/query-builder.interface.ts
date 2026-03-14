@@ -2,9 +2,9 @@ export interface PrismaFindManyArgs {
   skip?: number;
   take?: number;
   where?: PrismaWhereConditions;
-  orderBy?: Record<string, "asc" | "desc"> | Record<string, unknown>;
-  include?: Record<string, boolean | unknown>;
+  orderBy?: Record<string, "asc" | "desc" | unknown>;
   select?: Record<string, boolean | unknown>;
+  include?: Record<string, boolean | unknown>;
   cursor?: Record<string, unknown>;
   distinct?: string | string[];
   [key: string]: unknown;
@@ -28,9 +28,9 @@ export interface PrismaModelDelegate {
 }
 
 export interface IQueryParams {
-  searchTerm?: string;
   page?: string;
   limit?: string;
+  searchTerm?: string;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
   fields?: string;
@@ -43,12 +43,12 @@ export interface IQueryConfig {
   filterableFields?: string[];
 }
 
-export interface PrismaStringFilter {
+export interface PrismaSearchString {
   contains?: string;
   mode?: "insensitive" | "default";
   startsWith?: string;
   endsWith?: string;
-  not?: string | PrismaStringFilter;
+  not?: string | PrismaSearchString;
   in?: string[];
   notIn?: string[];
 }
@@ -64,10 +64,10 @@ export interface PrismaNumberFilter {
   notIn?: number[];
 }
 
-export interface IQueryResult<T> {
+export interface QueryResult<T> {
   data: T[];
   meta: {
-    page: number;
+    currentPage: number;
     limit: number;
     total: number;
     totalPages: number;

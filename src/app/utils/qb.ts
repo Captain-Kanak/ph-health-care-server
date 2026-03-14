@@ -6,11 +6,11 @@ import {
   PrismaModelDelegate,
   IQueryConfig,
   IQueryParams,
-  PrismaStringFilter,
+  PrismaSearchString,
   PrismaWhereConditions,
   PrismaNumberFilter,
-  IQueryResult,
-} from "../../interfaces/query.interface";
+  QueryResult,
+} from "../../interfaces/query-builder.interface";
 
 export class QueryBuilder<
   T,
@@ -59,7 +59,7 @@ export class QueryBuilder<
     if (searchTerm && searchableFields && searchableFields.length > 0) {
       const searchConditions: Record<string, unknown>[] = searchableFields.map(
         (fields) => {
-          const stringFilter: PrismaStringFilter = {
+          const stringFilter: PrismaSearchString = {
             contains: searchTerm,
             mode: "insensitive",
           };
@@ -424,7 +424,7 @@ export class QueryBuilder<
     return this;
   }
 
-  async execute(): Promise<IQueryResult<T>> {
+  async execute(): Promise<QueryResult<T>> {
     const [total, data] = await Promise.all([
       this.model.count(
         this.countQuery as Parameters<typeof this.model.count>[0],
@@ -439,7 +439,7 @@ export class QueryBuilder<
     return {
       data,
       meta: {
-        page: this.page,
+        currentPage: this.page,
         limit: this.limit,
         total: total,
         totalPages,
@@ -511,7 +511,7 @@ export class QueryBuilder<
 
   private _parseRangeFilterValue(
     value: Record<string, number | string>,
-  ): PrismaNumberFilter | PrismaStringFilter | Record<string, unknown> {
+  ): PrismaNumberFilter | PrismaSearchString | Record<string, unknown> {
     const rangeQuery: Record<string, string | number | (string | number)[]> =
       {};
 
