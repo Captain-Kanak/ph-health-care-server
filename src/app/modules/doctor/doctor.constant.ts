@@ -2,12 +2,13 @@ import { Prisma } from "@prisma/client";
 
 export const doctorSearchableFields = [
   "name",
-  // "email",
-  // "qualification",
-  // "designation",
-  // "currentWorkingPlace",
-  // "registrationNumber",
-  // "specialities.speciality.title",
+  "phone",
+  "email",
+  "qualification",
+  "designation",
+  "currentWorkingPlace",
+  "registrationNumber",
+  "specialities.speciality.title",
 ];
 
 export const doctorFilterableFields = [

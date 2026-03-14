@@ -38,15 +38,52 @@ const getAllDoctors = async (query: IQueryParams) => {
     //   .fields()
     //   .execute();
 
-    await prisma.doctor.findMany({
+    const doc = await prisma.doctor.findMany({
       skip: 0,
       take: 10,
       where: {
         isDeleted: false,
+        OR: [
+          {
+            name: {
+              contains: "",
+              mode: "insensitive",
+            },
+          },
+          {
+            email: {
+              contains: "",
+              mode: "insensitive",
+            },
+          },
+          {
+            specialities: {
+              some: {
+                speciality: {
+                  title: {
+                    contains: "",
+                    mode: "insensitive",
+                  },
+                },
+              },
+            },
+          },
+        ],
       },
       orderBy: {
         user: {
           createdAt: "desc",
+        },
+      },
+      include: {
+        specialities: {
+          include: {
+            speciality: {
+              select: {
+                title: true,
+              },
+            },
+          },
         },
       },
     });

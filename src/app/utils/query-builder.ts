@@ -122,6 +122,29 @@ export class QueryBuilder<T, TWhereInput, TInclude> {
       const searchConditions: Record<string, unknown>[] = searchableFields.map(
         (fields) => {
           if (fields.includes(".")) {
+            const fieldParts = fields.split(".").map((field) => field.trim());
+
+            if (fieldParts.length === 2) {
+              const [field, nestedField] = fieldParts;
+
+              return {
+                [field]: {
+                  [nestedField]: searchString,
+                },
+              };
+            } else if (fieldParts.length === 3) {
+              const [field, nestedField1, nestedField2] = fieldParts;
+
+              return {
+                [field]: {
+                  some: {
+                    [nestedField1]: {
+                      [nestedField2]: searchString,
+                    },
+                  },
+                },
+              };
+            }
           }
 
           return {
