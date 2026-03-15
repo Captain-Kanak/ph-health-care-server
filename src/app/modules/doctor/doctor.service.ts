@@ -43,51 +43,6 @@ const getAllDoctors = async (query: IQueryParams) => {
       take: 10,
       where: {
         isDeleted: false,
-        // gender: {
-        //   in: ["MALE", "FEMALE"],
-        // },
-        OR: [
-          {
-            name: {
-              contains: "",
-              mode: "insensitive",
-            },
-          },
-          {
-            email: {
-              contains: "",
-              mode: "insensitive",
-            },
-          },
-          {
-            specialities: {
-              some: {
-                speciality: {
-                  title: {
-                    contains: "",
-                    mode: "insensitive",
-                  },
-                },
-              },
-            },
-          },
-        ],
-      },
-      orderBy: {
-        user: {
-          createdAt: "desc",
-        },
-      },
-      include: {
-        specialities: {
-          include: {
-            speciality: {
-              select: {
-                title: true,
-              },
-            },
-          },
-        },
       },
     });
 

@@ -2,8 +2,10 @@ import { Prisma } from "@prisma/client";
 
 export const doctorSearchableFields = [
   "name",
+  "user.name",
   "phone",
   "email",
+  "address",
   "qualification",
   "designation",
   "currentWorkingPlace",
@@ -14,13 +16,13 @@ export const doctorSearchableFields = [
 export const doctorFilterableFields = [
   "appointmentFee",
   "gender",
-  // "experience",
-  // "registrationNumber",
-  // "specialities.specialityId",
-  // "currentWorkingPlace",
-  // "designation",
-  // "qualification",
-  // "specialities.speciality.title",
+  "experience",
+  "registrationNumber",
+  "currentWorkingPlace",
+  "designation",
+  "qualification",
+  "specialities.specialityId",
+  "specialities.speciality.title",
 ];
 
 export const doctorIncludeConfig: Partial<

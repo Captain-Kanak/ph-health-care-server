@@ -173,9 +173,63 @@ export class QueryBuilder<T, TWhereInput, TInclude> {
         return;
       }
 
-      //   if (field.includes(".")) {
-      //     return;
-      //   }
+      if (filterableFields && !filterableFields.includes(field)) {
+        return;
+      }
+
+      if (field.includes(".")) {
+        const fieldParts = field.split(".").map((field) => field.trim());
+
+        if (fieldParts.length === 2) {
+          const [field, nestedField] = fieldParts;
+
+          this.query.where = {
+            ...this.query.where,
+            [field]: {
+              some: {
+                [nestedField]: this._parseFilterValue(value),
+              },
+            },
+          };
+
+          this.countQuery.where = {
+            ...this.countQuery.where,
+            [field]: {
+              some: {
+                [nestedField]: this._parseFilterValue(value),
+              },
+            },
+          };
+
+          return;
+        } else if (fieldParts.length === 3) {
+          const [field, nestedField1, nestedField2] = fieldParts;
+
+          this.query.where = {
+            ...this.query.where,
+            [field]: {
+              some: {
+                [nestedField1]: {
+                  [nestedField2]: this._parseFilterValue(value),
+                },
+              },
+            },
+          };
+
+          this.countQuery.where = {
+            ...this.countQuery.where,
+            [field]: {
+              some: {
+                [nestedField1]: {
+                  [nestedField2]: this._parseFilterValue(value),
+                },
+              },
+            },
+          };
+
+          return;
+        }
+      }
 
       this.query.where = {
         ...this.query.where,
