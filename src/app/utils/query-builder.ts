@@ -10,8 +10,6 @@ import {
   QueryResult,
 } from "../../interfaces/query-builder.interface";
 
-// Cardiologists, Oncologists, Nephrologists, Neurologists
-
 export class QueryBuilder<T, TWhereInput, TInclude> {
   private query: PrismaFindManyArgs;
   private countQuery: PrismaCountArgs;
@@ -278,6 +276,73 @@ export class QueryBuilder<T, TWhereInput, TInclude> {
 
     this.query.orderBy = {
       [this.sortBy]: this.sortOrder,
+    };
+
+    return this;
+  }
+
+  select(): this {
+    const { fields } = this.queryParams;
+    const fieldsArray = fields?.split(",").map((field) => field.trim());
+
+    if (fieldsArray?.length) {
+      delete this.queryParams.includes;
+    }
+
+    fieldsArray?.forEach((field) => {
+      if (field.includes(".")) {
+        const fieldParts = field.split(".").map((field) => field.trim());
+
+        if (fieldParts.length === 2) {
+          const [field, nestedField] = fieldParts;
+
+          this.query.select = {
+            ...this.query.select,
+            [field]: {
+              select: {
+                [nestedField]: true,
+              },
+            },
+          };
+
+          return;
+        } else if (fieldParts.length === 3) {
+          const [field, nestedField1, nestedField2] = fieldParts;
+
+          this.query.select = {
+            ...this.query.select,
+            [field]: {
+              select: {
+                [nestedField1]: {
+                  select: {
+                    [nestedField2]: true,
+                  },
+                },
+              },
+            },
+          };
+
+          return;
+        }
+      }
+
+      this.query.select = {
+        ...this.query.select,
+        [field]: true,
+      };
+    });
+
+    return this;
+  }
+
+  includes(relations: TInclude): this {
+    if (this.queryParams.fields) {
+      return this;
+    }
+
+    this.query.include = {
+      ...this.query.include,
+      ...relations,
     };
 
     return this;

@@ -63,6 +63,15 @@ const getAllDoctors = async (query: IQueryParams) => {
       .search()
       .filter()
       .sort()
+      .select()
+      .includes({
+        specialities: {
+          include: {
+            speciality: true,
+          },
+        },
+        user: true,
+      })
       .execute();
 
     return {
